@@ -16,6 +16,8 @@ on:
       - "Tests/**"
       - "CTCare.sln"
       - ".github/workflows/**"
+env:
+  IMAGE_NAME: ghcr.io/angeloakuhwa/ctcare/ctcare-api
 
 # --- Prevent wasted builds --------------------------------------------------
 concurrency:
@@ -145,5 +147,5 @@ jobs:
           file: ./Src/CTCare.Api/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/ctcare-api:latest
-            ghcr.io/${{ github.repository_owner }}/ctcare-api:${{ github.run_number }}
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.run_number }}
