@@ -104,9 +104,11 @@ jobs:
         if: always()
         uses: codecov/codecov-action@v4
         with:
-          files: "**/TestResults/coverage/**/*.xml"
-          # token: ${{ secrets.CODECOV_TOKEN }}   # Not needed for public repos
-          fail_ci_if_error: true
+          files: '**/TestResults/coverage/**/*.xml'
+          flags: backend
+          verbose: true
+          fail_ci_if_error: false   # flip to true after it’s working
+          # token: ${{ secrets.CODECOV_TOKEN }}  # <- ONLY if you choose Option B
 
   # --- Optional: Docker image to GHCR on main pushes ------------------------
   # Would be Enabled when I am ready to ship containers. Ensure a Dockerfile exists at src/CTCare.Api/Dockerfile.
