@@ -112,7 +112,7 @@ jobs:
           flags: backend
           verbose: true
           fail_ci_if_error: false   # flip to true after it’s working
-          # token: ${{ secrets.CODECOV_TOKEN }}  # <- ONLY if you choose Option B
+          token: ${{ secrets.CODECOV_TOKEN }}  # <- ONLY if you choose Option B
 
   # --- Optional: Docker image to GHCR on main pushes ------------------------
   # Would be Enabled when I am ready to ship containers. Ensure a Dockerfile exists at src/CTCare.Api/Dockerfile.
