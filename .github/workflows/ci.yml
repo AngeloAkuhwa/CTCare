@@ -38,6 +38,10 @@ jobs:
         with:
           dotnet-version: "8.0.x"
           cache: true                   # Speeds up restore by caching NuGet
+          cache-dependency-path: |
+            **/*.csproj
+            **/*.props
+            **/*.targets
 
       # (Optional) Extra NuGet cache for non-standard layouts
       - name: Cache NuGet packages (fallback)
