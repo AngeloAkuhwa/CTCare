@@ -95,7 +95,7 @@ jobs:
 
       # 10) Publish API (useful for deployments/manual testing)
       - name: Publish CTCare.Api
-        run: dotnet publish src/CTCare.Api/CTCare.Api.csproj -c Release -o ./artifacts/api
+        run: dotnet publish Src/CTCare.Api/CTCare.Api.csproj -c Release -o ./artifacts/api
 
       - name: Upload published API artifact
         uses: actions/upload-artifact@v4
@@ -115,7 +115,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}  # <- ONLY if you choose Option B
 
   # --- Optional: Docker image to GHCR on main pushes ------------------------
-  # Would be Enabled when I am ready to ship containers. Ensure a Dockerfile exists at src/CTCare.Api/Dockerfile.
+  # Would be Enabled when I am ready to ship containers. Ensure a Dockerfile exists at Src/CTCare.Api/Dockerfile.
   docker:
     name: Build & push Docker image
     needs: build-test
@@ -142,7 +142,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./src/CTCare.Api/Dockerfile
+          file: ./Src/CTCare.Api/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/CTCare-api:latest
