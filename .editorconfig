@@ -1,20 +1,19 @@
-# EditorConfig is awesome: http://EditorConfig.org
-
+# EditorConfig is awesome: https://EditorConfig.org
 root = true
 
 [*]
 charset = utf-8
-indent_style = tab
-indent_size = 2
+end_of_line = lf          
+indent_style = space      
+indent_size = 4
 trim_trailing_whitespace = true
-charset = utf-8
-end_of_line = crlf
+insert_final_newline = true
 
-
-# Ensure consistent formatting for C# files
 [*.cs]
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = true
+dotnet_style_require_accessibility_modifiers = always:warning
+
 csharp_new_line_before_open_brace = all
 csharp_indent_case_contents = true
 csharp_indent_switch_labels = true
@@ -25,23 +24,16 @@ csharp_style_var_when_type_is_apparent = true:suggestion
 csharp_prefer_braces = true:warning
 csharp_space_before_colon_in_inheritance_clause = false
 csharp_space_after_colon_in_inheritance_clause = true
-
 csharp_style_namespace_declarations = file_scoped:suggestion
-
 csharp_style_expression_bodied_methods = when_possible:suggestion
 csharp_style_expression_bodied_properties = when_possible:suggestion
 
-dotnet_style_require_accessibility_modifiers = always:warning
-
-dotnet_sort_system_directives_first = true
-dotnet_separate_import_directive_groups = true
-
 [*.json]
-indent_style = tab
+indent_style = space
 indent_size = 2
 
 [*.xml]
-indent_style = tab
+indent_style = space
 indent_size = 2
 
 [*.md]
