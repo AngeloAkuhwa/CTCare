@@ -145,5 +145,5 @@ jobs:
           file: ./Src/CTCare.Api/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/CTCare-api:latest
-            ghcr.io/${{ github.repository }}/CTCare-api:${{ github.run_number }}
+            ghcr.io/${{ github.repository_owner }}/ctcare-api:latest
+            ghcr.io/${{ github.repository_owner }}/ctcare-api:${{ github.run_number }}
