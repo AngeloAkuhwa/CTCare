@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+    db:
+        image: postgres:16-alpine
+        container_name: ctcare_db
+        environment:
+            POSTGRES_DB: ${PG_DB}
+            POSTGRES_USER: ${PG_USER}
+            POSTGRES_PASSWORD: ${PG_PASSWORD}
+        ports:
+            - "${PG_PORT}:5432"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
+            interval: 5s
+            timeout: 3s
+            retries: 20
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+
+    redis:
+        image: redis:7-alpine
+        container_name: ctcare_redis
+        command: ["redis-server", "--appendonly", "yes"]
+        ports:
+            - "${REDIS_PORT}:6379"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 20
+        volumes:
+            - redisdata:/data
+
+    api:
+        build:
+            context: .
+            dockerfile: Dockerfile # keep this if your Dockerfile lives here
+        container_name: ctcare_api
+        depends_on:
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        environment:
+            ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+            # App settings (match your Program.cs binding)
+            ConnectionStrings__DefaultConnection: ${DB_CONNECTION_STRING}
+            Redis__ConnectionString: ${REDIS_CONNECTION_STRING}
+            Sentry__Dsn: ${SENTRY_KEY}
+            Auth__ApiKeys__0: ${API_KEY}
+            RateLimiting__RequestsPerMinute: ${RATE_LIMIT_REQUESTS_PER_MINUTE}
+            RateLimiting__Burst: ${RATE_LIMIT_BURST}
+        ports:
+            - "${API_PORT}:8080"
+
+    # Optional: pgAdmin for DB GUI
+    pgadmin:
+        image: dpage/pgadmin4:8.12
+        container_name: ctcare_pgadmin
+        environment:
+            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+        ports:
+            - "${PGADMIN_PORT}:80"
+        depends_on:
+            db:
+                condition: service_healthy
+
+volumes:
+    pgdata:
+    redisdata:

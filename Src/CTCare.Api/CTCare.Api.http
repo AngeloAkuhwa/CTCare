@@ -1,0 +1,6 @@
+@CTCare.Api_HostAddress = http://localhost:5087
+
+GET {{CTCare.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
