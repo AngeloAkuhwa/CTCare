@@ -45,7 +45,7 @@ services:
             ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
             # App settings (match your Program.cs binding)
             ConnectionStrings__DefaultConnection: ${DB_CONNECTION_STRING}
-            Redis__ConnectionString: ${REDIS_CONNECTION_STRING}
+            RedisSetting__ConnectionString: ${REDIS_CONNECTION_STRING}
             Sentry__Dsn: ${SENTRY_KEY}
             Auth__ApiKeys__0: ${API_KEY}
             RateLimiting__RequestsPerMinute: ${RATE_LIMIT_REQUESTS_PER_MINUTE}
