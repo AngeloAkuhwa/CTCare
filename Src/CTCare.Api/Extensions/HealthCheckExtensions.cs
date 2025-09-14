@@ -10,7 +10,6 @@ namespace CTCare.Api.Extensions;
 
 public static class HealthCheckExtensions
 {
-    // Health checks
     public static IServiceCollection AddHealthChecksInfra(this IServiceCollection services, IHostEnvironment env)
     {
         var sp = services.BuildServiceProvider();
@@ -19,7 +18,6 @@ public static class HealthCheckExtensions
         var dbRaw = cfg.GetConnectionString("DefaultConnection") ?? string.Empty;
         var dbConn = Helper.NormalizePostgresForRender(dbRaw);
 
-        // Redis below…
         var redisSettings = new RedisSetting();
         cfg.GetSection(nameof(RedisSetting)).Bind(redisSettings);
 
@@ -35,7 +33,6 @@ public static class HealthCheckExtensions
             redisSettings.Password
         );
 
-        // HealthChecks needs a single string: "host:port[,password=...]"
         var redisHc = string.IsNullOrEmpty(redisPwd)
             ? $"{endpoint},abortConnect=false"
             : $"{endpoint},password={redisPwd},abortConnect=false";

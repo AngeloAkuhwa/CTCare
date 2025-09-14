@@ -18,7 +18,6 @@ public static class ApiKeyExtensions
         return app.Use(async (ctx, next) =>
         {
             var path = ctx.Request.Path.Value ?? string.Empty;
-            // allowlist: swagger, health, hangfire
             if (path.StartsWith("/swagger") || path.StartsWith("/health") || path.StartsWith("/hangfire"))
             {
                 await next();
@@ -26,12 +25,6 @@ public static class ApiKeyExtensions
             }
 
             var opts = ctx.RequestServices.GetRequiredService<ApiKeyOptions>();
-            //if (opts.Keys.Length == 0)
-            //{
-            //    // no keys configured => open (handy for local dev)
-            //    await next();
-            //    return;
-            //}
 
             if (!ctx.Request.Headers.TryGetValue("X-Api-Key", out var provided) ||
                 !opts.Keys.Contains(provided.ToString()))

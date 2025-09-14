@@ -28,18 +28,6 @@ public static class SwaggerExtensions
                 Description = "Enter 'Bearer {token}'"
             });
 
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
-                        Name = "Bearer"
-                    },
-                    Array.Empty<string>()
-                }
-            });
-
             c.AddSecurityDefinition("XApiKey", new OpenApiSecurityScheme
             {
                 In = ParameterLocation.Header,
@@ -53,12 +41,19 @@ public static class SwaggerExtensions
                 {
                     new OpenApiSecurityScheme
                     {
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
+                        Name = "Bearer"
+                    },
+                    Array.Empty<string>()
+                }    ,
+                {
+                    new OpenApiSecurityScheme
+                    {
                         Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "XApiKey" }
                     },
                     Array.Empty<string>()
                 }
             });
-
         });
 
         return services;

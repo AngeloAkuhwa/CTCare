@@ -7,7 +7,6 @@ namespace CTCare.Api.Extensions;
 
 public static class HangfireExtensions
 {
-    // Hangfire
     public static IServiceCollection AddHangfirePostgres(this IServiceCollection services, IHostEnvironment env)
     {
         var sp = services.BuildServiceProvider();
