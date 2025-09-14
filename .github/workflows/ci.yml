@@ -141,7 +141,7 @@ jobs:
     # --- Optional: Docker image to GHCR on main pushes ------------------------
     # Would be Enabled when I am ready to ship containers. Ensure a Dockerfile exists at Src/CTCare.Api/Dockerfile.
     integration:
-        name: Compose up & smoke test (optional)
+        name: Compose up & smoke test
         needs: build-test
         if: ${{ vars.RUN_COMPOSE == 'true' && needs.build-test.result == 'success' }}
         runs-on: ubuntu-latest
@@ -149,9 +149,15 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
 
+            # step to confirm the working directory & files
+            - name: Show repo root
+              run: |
+                  pwd
+                  ls -la
+
             - name: Start stack (db, redis, api)
               run: |
-                  docker compose -f docker-compose.yml up -d db redis api
+                  docker compose -f docker-compose.yaml up -d db redis api
 
             - name: Wait for API health
               run: |
