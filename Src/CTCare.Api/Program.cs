@@ -58,13 +58,24 @@ try
     //CORS before auth/authorization
     app.UseCors("AllowAll");
 
-    //Auth → Rate limiting → Authorization
-    app.UseAuthentication();
-    app.UseRateLimiter();
-    app.UseAuthorization();
+    ////Auth → Rate limiting → Authorization
+    //app.UseAuthentication();
+    //app.UseRateLimiter();
+    //app.UseAuthorization();
 
-    //API key gate AFTER auth & before endpoints
-    app.UseApiKeyGate();
+    ////API key gate AFTER auth & before endpoints
+    //app.UseApiKeyGate();
+
+    app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/health"), a =>
+    {
+        //Auth → Rate limiting → Authorization
+        app.UseAuthentication();
+        app.UseRateLimiter();
+        app.UseAuthorization();
+
+        //API key gate AFTER auth & before endpoints
+        app.UseApiKeyGate();
+    });
 
     //Hangfire dashboard (after auth/authorization if you want it protected)
     // Optionally add an authorization filter if needed
