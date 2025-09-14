@@ -30,6 +30,10 @@ public static class RedisExtensions
             }
 
             opt.SyncTimeout = settings.SyncTimeOut;
+            opt.AbortOnConnectFail = settings.AbortOnConnectFail;
+            opt.ConnectRetry = settings.ConnectRetry;
+            opt.ConnectTimeout = settings.ConnectTimeout;
+
             return ConnectionMultiplexer.Connect(opt);
         });
 
