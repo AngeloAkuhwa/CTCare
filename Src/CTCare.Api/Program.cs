@@ -49,12 +49,10 @@ try
         app.UseHsts();
     }
 
-    //Swagger (dev only)
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+    //Swagger (always on)
+
+    app.UseSwagger();
+    app.UseSwaggerUI();
 
     //CORS before auth/authorization
     app.UseCors("AllowAll");
