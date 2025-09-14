@@ -6,6 +6,7 @@ using CTCare.Shared.Settings;
 
 using Hangfire;
 
+
 try
 {
     var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +17,7 @@ try
     builder.Services.AddSwaggerWithJwt();
     builder.Services.AddCorsOpenPolicy("AllowAll");
 
-    builder.Services.AddHangfirePostgres();
+    builder.Services.AddHangfirePostgres(builder.Environment);
     builder.Services.AddRedisCaching();
     builder.Services.AddHealthChecksInfra();
     builder.Services.AddGlobalRateLimiting();
