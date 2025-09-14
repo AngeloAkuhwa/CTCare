@@ -9,85 +9,83 @@ namespace CTCare.Api.Extensions;
 
 public static class HangfireExtensions
 {
-    public static IServiceCollection AddHangfirePostgres(this IServiceCollection services, IHostEnvironment env)
+    public static IServiceCollection AddHangfirePostgres(
+        this IServiceCollection services,
+        IHostEnvironment env)
     {
         var sp = services.BuildServiceProvider();
-        var config = sp.GetRequiredService<IConfiguration>();
-        var conn = env.IsProduction() ? GetPgConnection(config) : config.GetConnectionString("DefaultConnection");
+         var config = sp.GetRequiredService<IConfiguration>();
+        var raw = config.GetConnectionString("DefaultConnection") ?? string.Empty;
+        var conn = env.IsProduction() && NeedsUrlConversion(raw) ? ConvertPostgresUrlToNpgsql(raw) : raw;
 
         if (string.IsNullOrWhiteSpace(conn))
         {
             throw new InvalidOperationException("Hangfire connection string is missing.");
         }
 
+        // Retry a few times on cold boot
         var retries = 0;
-
         while (true)
         {
             try
             {
                 services.AddHangfire(cfg =>
                     cfg.UseSimpleAssemblyNameTypeSerializer()
-                        .UseRecommendedSerializerSettings()
-                        .UsePostgreSqlStorage(conn));
-                break;
+                       .UseRecommendedSerializerSettings()
+                       .UsePostgreSqlStorage(conn, new PostgreSqlStorageOptions
+                       {
+                           SchemaName = "hangfire",
+                           PrepareSchemaIfNecessary = true,
+                           QueuePollInterval = TimeSpan.FromSeconds(5)
+                       }));
+
+                services.AddHangfireServer();
+                return services;
             }
             catch when (retries++ < 5)
             {
+                Console.WriteLine($"[Hangfire] Waiting for Postgres… attempt {retries}/5");
                 Thread.Sleep(TimeSpan.FromSeconds(2));
             }
         }
-
-
-        services.AddHangfireServer();
-        return services;
     }
 
-    // ...
+    private static bool NeedsUrlConversion(string raw)
+        => raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+        || raw.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase);
 
-    private static string GetPgConnection(IConfiguration cfg)
+    private static string ConvertPostgresUrlToNpgsql(string url)
     {
-        var raw = cfg.GetConnectionString("DefaultConnection") ?? string.Empty;
+        var uri = new Uri(url);
 
-        // Render (and many hosts) provide DATABASE URLs: postgres://user:pass@host:5432/db
-        if (raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+        // user:pass
+        var userInfo = uri.UserInfo.Split(':', 2, StringSplitOptions.RemoveEmptyEntries);
+        var user = Uri.UnescapeDataString(userInfo.ElementAtOrDefault(0) ?? "");
+        var pass = Uri.UnescapeDataString(userInfo.ElementAtOrDefault(1) ?? "");
+
+        var b = new NpgsqlConnectionStringBuilder
         {
-            var uri = new Uri(raw);
+            Host = uri.Host,
+            Port = uri.IsDefaultPort ? 5432 : uri.Port,
+            Username = user,
+            Password = pass,
+            Database = uri.AbsolutePath.Trim('/'),
 
-            // user:pass
-            var userInfo = uri.UserInfo.Split(':', 2, StringSplitOptions.RemoveEmptyEntries);
-            var user = Uri.UnescapeDataString(userInfo.ElementAtOrDefault(0) ?? "");
-            var pass = Uri.UnescapeDataString(userInfo.ElementAtOrDefault(1) ?? "");
+            // Public Render DB endpoints usually require TLS
+            SslMode = SslMode.Require,
+            TrustServerCertificate = true
+        };
 
-            var b = new NpgsqlConnectionStringBuilder
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        foreach (var kv in query)
+        {
+            var value = kv.Value.Count > 0 ? kv.Value[0] : null;
+            if (!string.IsNullOrWhiteSpace(value))
             {
-                Host = uri.Host,
-                Port = uri.IsDefaultPort ? 5432 : uri.Port,
-                Username = user,
-                Password = pass,
-                Database = uri.AbsolutePath.Trim('/'),
-
-                // Render Postgres enforces TLS when you hit it over the public network.
-                // If you use the internal connection on Render, you can relax this.
-                SslMode = SslMode.Require,
-                TrustServerCertificate = true
-            };
-
-            // carry across any query params on the URL (?pooling=true&timeout=15 etc.)
-            var query = QueryHelpers.ParseQuery(uri.Query);
-            foreach (var kvp in query)
-            {
-                // QueryHelpers returns values as StringValues; take the first
-                var val = kvp.Value.Count > 0 ? kvp.Value[0] : null;
-                if (!string.IsNullOrWhiteSpace(val))
-                {
-                    b[kvp.Key] = val;
-                }
+                b[kv.Key] = value;
             }
-
-            raw = b.ToString();
         }
 
-        return raw;
+        return b.ToString();
     }
 }
