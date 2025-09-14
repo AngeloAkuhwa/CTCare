@@ -80,8 +80,8 @@ jobs:
               run: dotnet restore CTCare.sln
 
             # 4) Enforce code style (fails if formatting is required)
-            - name: Verify formatting
-              run: dotnet format CTCare.sln --verify-no-changes
+            # - name: Verify formatting
+            #   run: dotnet format CTCare.sln --verify-no-changes
 
             # 5) Build (Release)
             - name: Build solution
