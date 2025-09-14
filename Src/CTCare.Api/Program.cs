@@ -1,47 +1,84 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Hosting;
+using CTCare.Api.Extensions;
+using CTCare.Api.Middlewares;
+using CTCare.Application.Interfaces;
+using CTCare.Application.Services;
+using CTCare.Shared.Settings;
 
-var builder = WebApplication.CreateBuilder(args);
+using Hangfire;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+try
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    var builder = WebApplication.CreateBuilder(args);
 
-app.UseHttpsRedirection();
+    // --- Services ---
+    builder.AddSentryMonitoring();
+    builder.Services.AddControllers();
+    builder.Services.AddSwaggerWithJwt();
+    builder.Services.AddCorsOpenPolicy("AllowAll");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    builder.Services.AddHangfirePostgres();
+    builder.Services.AddRedisCaching();
+    builder.Services.AddHealthChecksInfra();
+    builder.Services.AddGlobalRateLimiting();
+    builder.Services.AddApiKeyAuthOptions();
+    builder.Services
+        .Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"))
+        .AddSingleton<IEmailService, EmailService>();
+    builder.Services.AddScoped<ICacheService, CacheService>();
 
-app.MapGet("/weatherforecast", () =>
+
+    // If running behind a proxy (Render), trust x-forwarded headers
+    builder.Services.AddForwardedHeaders();
+
+    var app = builder.Build();
+
+    //Middleware pipeline
+
+    //Forwarded headers FIRST (before anything that reads scheme/host)
+    app.UseForwardedHeaders();
+
+    //Sentry (request scope + tracing) and global exception handler
+    app.UseSentryTracing();
+    app.UseMiddleware<GlobalExceptionMiddleware>();
+
+    if (!app.Environment.IsDevelopment())
     {
-        var forecast = Enumerable
-            .Range(1, 5)
-            .Select(index =>
-                new WeatherForecast(
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                )
-            )
-            .ToArray();
+        //HTTPS/HSTS early
+        app.UseHttpsRedirection();
+        app.UseHsts();
+    }
 
-        return forecast;
-    })
-    .WithName("GetWeatherForecast")
-    .WithOpenApi();
+    //Swagger (dev only)
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
 
-app.Run();
+    //CORS before auth/authorization
+    app.UseCors("AllowAll");
 
-internal sealed record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary);
+    //Auth → Rate limiting → Authorization
+    app.UseAuthentication();
+    app.UseRateLimiter();
+    app.UseAuthorization();
+
+    //API key gate AFTER auth & before endpoints
+    app.UseApiKeyGate();
+
+    //Hangfire dashboard (after auth/authorization if you want it protected)
+    // Optionally add an authorization filter if needed
+    app.UseHangfireDashboard("/hangfire");
+
+    //Health + Controllers
+    app.MapHealthEndpoints();
+    app.MapControllers();
+
+    app.Run();
+}
+catch (Exception ex)
+{
+    SentrySdk.CaptureException(ex);
+    Console.WriteLine($"Fatal error: {ex}");
+    await SentrySdk.FlushAsync(TimeSpan.FromSeconds(2));
+}

@@ -23,6 +23,13 @@
 # Keep binaries untouched
 *.dll  binary
 *.exe  binary
-*.png  binary
-*.jpg  binary
-*.pdf  binary
+
+# Treat common binaries as binary (no EOL conversion)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+
+# Keep Windows line endings only if you *must* for these (usually not needed):
+# *.bat eol=crlf

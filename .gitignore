@@ -119,3 +119,7 @@ packages/
 # Business Intelligence projects
 *.rdl.data
 *.bim.data
+*.env
+*.secrets
+*.var
+*.actrc

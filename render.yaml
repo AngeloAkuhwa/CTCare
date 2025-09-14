@@ -1,0 +1,52 @@
+services:
+    # --- Web API (Dockerfile runtime) ---
+    - type: web
+      name: ctcare-api
+      runtime: docker
+      plan: free
+      dockerfilePath: ./Src/CTCare.Api/Dockerfile
+      # Recommend letting CI trigger deploys via Deploy Hook after a green build:
+      autoDeploy: false
+      healthCheckPath: /health
+      # region: oregon           # (optional) pick your closest region
+      # numInstances: 1          # (optional)
+      envVars:
+          # App must bind to Render's dynamic port
+          - key: ASPNETCORE_URLS
+            value: http://0.0.0.0:${PORT}
+
+          - key: DOTNET_ENVIRONMENT
+            value: Production
+
+          - key: ConnectionStrings__DefaultConnection
+            fromDatabase:
+                name: ctcare-db
+                property: connectionString
+
+          - key: Redis__ConnectionString
+            fromService:
+                name: ctcare-redis
+                type: redis
+                property: connectionString
+
+          - key: Sentry__Dsn
+            sync: false # set securely in Render dashboard
+
+          - key: Auth__ApiKeys__0
+            sync: false # set securely in Render dashboard
+
+          - key: RateLimiting__RequestsPerMinute
+            value: "60"
+          - key: RateLimiting__Burst
+            value: "20"
+
+    # --- Redis cache ---
+    - type: redis
+      name: ctcare-redis
+      plan: free
+      ipAllowList: [] # internal network only
+
+databases:
+    - name: ctcare-db
+      plan: free
+      ipAllowList: [] # internal network only
