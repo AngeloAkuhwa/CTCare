@@ -194,7 +194,7 @@ jobs:
                     sleep 3
                   done
                   echo "::group::API logs"
-                  docker compose -f docker-compose.yml logs --no-color api | tail -n 400 || true
+                  docker compose -f docker-compose.yaml logs --no-color api | tail -n 400 || true
                   echo "::endgroup::"
                   exit 1
 
