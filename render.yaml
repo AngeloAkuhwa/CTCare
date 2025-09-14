@@ -31,6 +31,10 @@ services:
                 name: ctcare-redis
                 type: redis
                 property: connectionString
+          - key: RedisSetting__ConnectionString
+            value: red-<id>:6379
+          - key: RedisSetting__Password
+            value: <internal-auth-token>
           - key: RedisSetting__SlidingExpiration
             value: "12:00:00"
           - key: RedisSetting__AbsoluteExpiration
