@@ -46,6 +46,8 @@ services:
             # App settings (match your Program.cs binding)
             ConnectionStrings__DefaultConnection: ${DB_CONNECTION_STRING}
             RedisSetting__ConnectionString: ${REDIS_CONNECTION_STRING}
+            RedisSetting__Password: ${REDIS_PASSWORD}
+            RedisSetting__AbortOnConnectFail: "false"
             Sentry__Dsn: ${SENTRY_KEY}
             Auth__ApiKeys__0: ${API_KEY}
             RateLimiting__RequestsPerMinute: ${RATE_LIMIT_REQUESTS_PER_MINUTE}

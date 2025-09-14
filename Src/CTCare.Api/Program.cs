@@ -18,8 +18,8 @@ try
     builder.Services.AddCorsOpenPolicy("AllowAll");
 
     builder.Services.AddHangfirePostgres(builder.Environment);
-    builder.Services.AddRedisCaching();
-    builder.Services.AddHealthChecksInfra();
+    builder.Services.AddRedisCaching(builder.Environment);
+    builder.Services.AddHealthChecksInfra(builder.Environment);
     builder.Services.AddGlobalRateLimiting();
     builder.Services.AddApiKeyAuthOptions();
     builder.Services
