@@ -123,3 +123,5 @@ packages/
 *.secrets
 *.var
 *.actrc
+/.vars
+/Src/CTCare.Api/appsettings.json
