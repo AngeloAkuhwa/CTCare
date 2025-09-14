@@ -1,0 +1,142 @@
+@model dynamic
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Verify Your CTCare Account</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f2f6f9;font-family:Arial,sans-serif;">
+	<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+		<tr>
+			<td align="center" style="padding:40px 0;">
+				<table role="presentation" width="600" cellpadding="0" cellspacing="0"
+							 style="background:#ffffff;border-radius:12px;overflow:hidden;
+                      box-shadow:0 4px 16px rgba(0,0,0,0.1);">
+
+					<!-- Hero banner -->
+					<tr>
+						<td style="background:linear-gradient(135deg,#0052cc,#1a8cff);
+                       padding:30px;text-align:center;">
+							<img src="https://app.CTCare.com/assets/logo-white.png"
+									 alt="CTCare" width="130" style="display:block;margin:0 auto 15px;">
+							<h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:300;">
+								Verify Your Account
+							</h1>
+						</td>
+					</tr>
+
+					<!-- Greeting & CTA -->
+					<tr>
+						<td style="padding:35px 30px;">
+							<p style="font-size:16px;color:#333333;line-height:1.6;margin:0 0 20px;">
+								Hello <strong>@Model.Name</strong>,
+							</p>
+							<p style="font-size:16px;color:#333333;line-height:1.6;margin:0 0 30px;">
+								Thanks for joining CTCare! Please confirm your email to unlock all features and securely start learning.
+							</p>
+							<p style="text-align:center;margin:30px 0;">
+								<a href="@Model.Url"
+									 style="background-color:#007acc;color:#ffffff;
+                          text-decoration:none;padding:14px 40px;
+                          border-radius:6px;display:inline-block;
+                          font-size:16px;font-weight:600;">
+									Confirm My Email
+								</a>
+							</p>
+						</td>
+					</tr>
+
+					<!-- Why verification -->
+					<tr>
+						<td style="background:#f0f4f8;padding:30px 30px;">
+							<h2 style="margin:0 0 20px;color:#0052cc;font-size:20px;text-align:center;font-weight:400;">
+								Why Verify?
+							</h2>
+							<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+								<tr>
+									<td width="30" valign="top" style="padding:5px 10px 5px 0;">
+										<img src="https://cdn.CTCare.com/icons/check-blue.png"
+												 width="20" alt="✓">
+									</td>
+									<td style="font-size:15px;color:#333333;line-height:1.5;">
+										<strong>Enhanced Security</strong> – Protect your account from unauthorized access.
+									</td>
+								</tr>
+								<tr>
+									<td width="30" valign="top" style="padding:5px 10px 5px 0;">
+										<img src="https://cdn.CTCare.com/icons/check-blue.png"
+												 width="20" alt="✓">
+									</td>
+									<td style="font-size:15px;color:#333333;line-height:1.5;">
+										<strong>Full Access</strong> – Get all course materials and premium features.
+									</td>
+								</tr>
+								<tr>
+									<td width="30" valign="top" style="padding:5px 10px 5px 0;">
+										<img src="https://cdn.CTCare.com/icons/check-blue.png"
+												 width="20" alt="✓">
+									</td>
+									<td style="font-size:15px;color:#333333;line-height:1.5;">
+										<strong>Compliance</strong> – Ensure your data meets privacy and security standards.
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+
+					<!-- Link fallback -->
+					<tr>
+						<td style="padding:20px 30px;">
+							<p style="font-size:14px;color:#555555;line-height:1.4;margin:0 0 10px;">
+								If the button doesn’t work, paste this link into your browser:
+							</p>
+							<p style="font-size:14px;color:#007acc;word-break:break-all;margin:0;">
+								<a href="@Model.Url" style="color:#007acc;text-decoration:none;">
+									@Model.Url
+								</a>
+							</p>
+						</td>
+					</tr>
+
+					<!-- Social -->
+					<tr>
+						<td style="background:#ffffff;padding:25px 30px;text-align:center;">
+							<p style="margin:0 0 15px;font-size:14px;color:#666666;">
+								Connect with us:
+							</p>
+							<a href="https://facebook.com/CTCare" style="margin:0 6px;display:inline-block;">
+								<img src="https://cdn.CTCare.com/icons/facebook-blue.png" alt="Facebook" width="24" height="24">
+							</a>
+							<a href="https://twitter.com/CTCare" style="margin:0 6px;display:inline-block;">
+								<img src="https://cdn.CTCare.com/icons/twitter-blue.png" alt="Twitter" width="24" height="24">
+							</a>
+							<a href="https://instagram.com/CTCare" style="margin:0 6px;display:inline-block;">
+								<img src="https://cdn.CTCare.com/icons/instagram-blue.png" alt="Instagram" width="24" height="24">
+							</a>
+							<a href="https://linkedin.com/company/CTCare" style="margin:0 6px;display:inline-block;">
+								<img src="https://cdn.CTCare.com/icons/linkedin-blue.png" alt="LinkedIn" width="24" height="24">
+							</a>
+						</td>
+					</tr>
+
+					<!-- Footer with policies -->
+					<tr>
+						<td style="background:#e3f2fd;text-align:center;
+                       padding:15px 30px;font-size:12px;color:#555555;">
+							© @DateTime.UtcNow.Year CTCare. All rights reserved.<br>
+							<a href="https://CTCare.com/terms" style="color:#555555;text-decoration:underline;">
+								Terms of Service
+							</a>
+							&nbsp;|&nbsp;
+							<a href="https://CTCare.com/privacy" style="color:#555555;text-decoration:underline;">
+								Privacy Policy
+							</a>
+						</td>
+					</tr>
+
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>

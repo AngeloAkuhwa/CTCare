@@ -1,0 +1,263 @@
+name: .NET CI
+
+# --- Triggers ---------------------------------------------------------------
+on:
+    push:
+        branches: [main] # Run on direct pushes to main
+        paths: # Ignore docs-only changes to save minutes
+            - "Src/**"
+            - "Tests/**"
+            - "CTCare.sln"
+            - ".github/workflows/**"
+    pull_request:
+        branches: [main] # Run on PRs targeting main
+        paths:
+            - "Src/**"
+            - "Tests/**"
+            - "CTCare.sln"
+            - ".github/workflows/**"
+env:
+    IMAGE_NAME: ghcr.io/angeloakuhwa/ctcare/ctcare-api
+    # Secrets
+    PG_DB: ${{ secrets.PG_DB }}
+    PG_USER: ${{ secrets.PG_USER }}
+    PG_PORT: ${{ secrets.PG_PORT }}
+    REDIS_PORT: ${{ secrets.REDIS_PORT }}
+    API_PORT: ${{ secrets.API_PORT }}
+    PGADMIN_EMAIL: ${{ secrets.PGADMIN_EMAIL }}
+    PGADMIN_PORT: ${{ secrets.PGADMIN_PORT }}
+    ASPNETCORE_ENVIRONMENT: ${{ secrets.ASPNETCORE_ENVIRONMENT }}
+    RATE_LIMIT_REQUESTS_PER_MINUTE: ${{ secrets.RATE_LIMIT_REQUESTS_PER_MINUTE }}
+    RATE_LIMIT_BURST: ${{ secrets.RATE_LIMIT_BURST }}
+    PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+    PGADMIN_PASSWORD: ${{ secrets.PGADMIN_PASSWORD }}
+    API_KEY: ${{ secrets.API_KEY }}
+    SENTRY_KEY: ${{ secrets.SENTRY_KEY }}
+    DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+    REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
+
+    # Feature toggles
+    RUN_COMPOSE: ${{ vars.RUN_COMPOSE }} # set to 'true' to require integration
+    ENABLE_DOCKER: ${{ vars.ENABLE_DOCKER }} # build & push to GHCR if you need images
+
+# --- Prevent wasted builds --------------------------------------------------
+concurrency:
+    group: net-ci-${{ github.ref }} # One run per branch/PR at a time
+    cancel-in-progress: true # Auto-cancel older in-flight runs
+
+jobs:
+    build-test:
+        name: Build, Test, Coverage
+        runs-on: ubuntu-latest
+
+        steps:
+            # 1) Get the source
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            # 2) Install .NET 8 SDK (with built-in NuGet cache)
+            - name: Setup .NET SDK
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: "8.0.x"
+                  cache: true # Speeds up restore by caching NuGet
+                  cache-dependency-path: |
+                      **/*.csproj
+                      **/*.props
+                      **/*.targets
+
+            # (Optional) Extra NuGet cache for non-standard layouts
+            - name: Cache NuGet packages (fallback)
+              uses: actions/cache@v3
+              with:
+                  path: ~/.nuget/packages
+                  key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+                  restore-keys: |
+                      ${{ runner.os }}-nuget-
+
+            # 3) Restore all projects
+            - name: Restore dependencies
+              run: dotnet restore CTCare.sln
+
+            # 4) Enforce code style (fails if formatting is required)
+            - name: Verify formatting
+              run: dotnet format CTCare.sln --verify-no-changes
+
+            # 5) Build (Release)
+            - name: Build solution
+              run: dotnet build CTCare.sln --no-restore -c Release
+
+            # 6) Test with coverage (Cobertura plays nice with most tools, inc. Codecov)
+            - name: Run tests with code coverage
+              run: >
+                  dotnet test CTCare.sln -c Release --no-build
+                  --logger "trx;LogFileName=test-results.trx"
+                  /p:CollectCoverage=true
+                  /p:CoverletOutputFormat=cobertura
+                  /p:CoverletOutput=./TestResults/coverage/
+
+            # 7) Upload test results (always upload, even if tests fail)
+            - name: Upload test result files
+              if: ${{ always() && github.actor != 'nektos/act' }} # Skip when running with act ocally to test CI
+              uses: actions/upload-artifact@v4
+              with:
+                  name: test-results
+                  path: "**/TestResults/**/*.trx"
+
+            # 8) Upload coverage artifacts (Cobertura XML)
+            - name: Upload coverage artifact
+              if: ${{ always() && github.actor != 'nektos/act' }} # Skip when running with act ocally to test CI
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-cobertura
+                  path: "**/TestResults/coverage/**/*.xml"
+
+            # 9) Quick dependency security audit (does not fail the build)
+            - name: Vulnerability report
+              run: dotnet list CTCare.sln package --vulnerable || true
+
+            # 10) Publish API (useful for deployments/manual testing)
+            - name: Publish CTCare.Api
+              run: dotnet publish Src/CTCare.Api/CTCare.Api.csproj -c Release -o ./artifacts/api
+
+            - name: Upload published API artifact
+              if: ${{ github.actor != 'nektos/act' }} # Skip when running with act locally to test CI
+              uses: actions/upload-artifact@v4
+              with:
+                  name: CTCare-api
+                  path: artifacts/api
+
+            # 11) Upload coverage to Codecov (optional: needs CODECOV_TOKEN for private repos)
+            - name: Upload coverage to Codecov
+              if: ${{ always() && github.actor != 'nektos/act' }} # Skip when running with act ocally to test CI
+              uses: codecov/codecov-action@v4
+              with:
+                  files: "**/TestResults/coverage/**/*.xml"
+                  flags: backend
+                  verbose: true
+                  fail_ci_if_error: false # flip to true after it’s working
+                  token: ${{ secrets.CODECOV_TOKEN }} # <- ONLY if you choose Option B
+
+    # --- Optional: Docker image to GHCR on main pushes ------------------------
+    # Would be Enabled when I am ready to ship containers. Ensure a Dockerfile exists at Src/CTCare.Api/Dockerfile.
+    integration:
+        name: Compose up & smoke test
+        needs: build-test
+        if: ${{ vars.RUN_COMPOSE == 'true' && needs.build-test.result == 'success' }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            # step to confirm the working directory & files
+            - name: Show repo root
+              run: |
+                  pwd
+                  ls -la
+
+            - name: Start stack (db, redis, api)
+              run: |
+                  docker compose -f docker-compose.yaml up -d db redis api
+            - name: Compose ps
+              run: docker compose -f docker-compose.yaml ps
+
+            - name: Show API logs (first shot)
+              run: docker compose -f docker-compose.yaml logs --no-color api | tail -n 200 || true
+
+            - name: Show mapped port for API
+              id: port
+              shell: bash
+              run: |
+                  PORT_LINE="$(docker compose -f docker-compose.yaml port api 8080 || true)"
+                  echo "PORT_LINE=$PORT_LINE"
+                  # Expected format: "0.0.0.0:12345"
+                  PORT="${PORT_LINE##*:}"
+                  if [[ -z "$PORT" || "$PORT" == "$PORT_LINE" ]]; then
+                    echo "Could not parse mapped port"; exit 1
+                  fi
+                  echo "API_PORT=$PORT" >> "$GITHUB_ENV"
+                  echo "Resolved API_PORT=$PORT"
+
+            - name: Wait for API health
+              env:
+                  API_KEY: ${{ secrets.API_KEY }}
+              shell: bash
+              run: |
+                  set -e
+                  for i in {1..40}; do
+                    if curl -fsSL \
+                        -H "X-Api-Key: ${API_KEY}" \
+                        "http://localhost:${API_PORT}/health" >/dev/null 2>&1; then
+                      echo "API is healthy"; exit 0
+                    fi
+                    echo "Waiting for API... ($i/40)"
+                    sleep 3
+                  done
+                  echo "::group::API logs"
+                  docker compose -f docker-compose.yaml logs --no-color api | tail -n 400 || true
+                  echo "::endgroup::"
+                  exit 1
+
+            - name: Smoke check (public ping)
+              env:
+                  API_KEY: ${{ secrets.API_KEY }}
+              run: |
+                  curl -fsSL -H "X-Api-Key: ${API_KEY}" \
+                    "http://localhost:${API_PORT}/api/employees/ping" | jq .
+
+            - name: Dump logs on failure
+              if: failure()
+              run: |
+                  docker compose -f docker-compose.yaml logs --no-color db redis api | tail -n 400
+
+            - name: Tear down
+              if: always()
+              run: docker compose -f docker-compose.yaml down -v
+
+    docker:
+        name: Build & push Docker image
+        needs: build-test
+        if: ${{ vars.ENABLE_DOCKER == 'true' && github.ref == 'refs/heads/main' && needs.build-test.result == 'success' }}
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write # Needed to push to GHCR
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Login to GHCR
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build & push
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  file: ./Src/CTCare.Api/Dockerfile
+                  push: true
+                  tags: |
+                      ${{ env.IMAGE_NAME }}:latest
+                      ${{ env.IMAGE_NAME }}:${{ github.run_number }}
+
+    deploy:
+        name: Trigger Render deploy via API
+        runs-on: ubuntu-latest
+        needs: [build-test, integration] # <- require BOTH jobs to finish successfully
+        if: ${{ github.ref == 'refs/heads/main' && needs.build-test.result == 'success' && needs.integration.result == 'success' }}
+        steps:
+            - name: Trigger deploy
+              env:
+                  RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+              run: |
+                  if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+                    echo "RENDER_DEPLOY_HOOK secret is missing"; exit 1
+                  fi
+                  # POST with no body is fine; an empty JSON body also works.
+                  curl -fsSL -X POST "$RENDER_DEPLOY_HOOK" || { echo "Deploy hook failed"; exit 1; }
