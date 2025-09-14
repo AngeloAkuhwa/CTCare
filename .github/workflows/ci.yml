@@ -158,6 +158,14 @@ jobs:
             - name: Start stack (db, redis, api)
               run: |
                   docker compose -f docker-compose.yaml up -d db redis api
+            - name: Compose ps
+              run: docker compose -f docker-compose.yaml ps
+
+            - name: Show API logs (first shot)
+              run: docker compose -f docker-compose.yaml logs --no-color api | tail -n 200
+
+            - name: Show mapped port for API
+              run: docker compose -f docker-compose.yaml port api 8080 || true
 
             - name: Wait for API health
               run: |
@@ -176,11 +184,11 @@ jobs:
             - name: Dump logs on failure
               if: failure()
               run: |
-                  docker compose -f docker-compose.yml logs --no-color db redis api | tail -n 2000
+                  docker compose -f docker-compose.yaml logs --no-color db redis api | tail -n 400
 
             - name: Tear down
               if: always()
-              run: docker compose -f docker-compose.yml down -v
+              run: docker compose -f docker-compose.yaml down -v
 
     docker:
         name: Build & push Docker image
