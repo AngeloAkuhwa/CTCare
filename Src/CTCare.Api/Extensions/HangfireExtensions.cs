@@ -16,7 +16,7 @@ public static class HangfireExtensions
         var sp = services.BuildServiceProvider();
          var config = sp.GetRequiredService<IConfiguration>();
         var raw = config.GetConnectionString("DefaultConnection") ?? string.Empty;
-        var conn = NeedsUrlConversion(raw) ? ConvertPostgresUrlToNpgsql(raw) : raw;
+        var conn = env.IsProduction() && NeedsUrlConversion(raw) ? ConvertPostgresUrlToNpgsql(raw) : raw;
 
         if (string.IsNullOrWhiteSpace(conn))
         {
