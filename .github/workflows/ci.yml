@@ -162,24 +162,48 @@ jobs:
               run: docker compose -f docker-compose.yaml ps
 
             - name: Show API logs (first shot)
-              run: docker compose -f docker-compose.yaml logs --no-color api | tail -n 200
+              run: docker compose -f docker-compose.yaml logs --no-color api | tail -n 200 || true
 
             - name: Show mapped port for API
-              run: docker compose -f docker-compose.yaml port api 8080 || true
+              id: port
+              shell: bash
+              run: |
+                  PORT_LINE="$(docker compose -f docker-compose.yaml port api 8080 || true)"
+                  echo "PORT_LINE=$PORT_LINE"
+                  # Expected format: "0.0.0.0:12345"
+                  PORT="${PORT_LINE##*:}"
+                  if [[ -z "$PORT" || "$PORT" == "$PORT_LINE" ]]; then
+                    echo "Could not parse mapped port"; exit 1
+                  fi
+                  echo "API_PORT=$PORT" >> "$GITHUB_ENV"
+                  echo "Resolved API_PORT=$PORT"
 
             - name: Wait for API health
+              env:
+                  API_KEY: ${{ secrets.API_KEY }}
+              shell: bash
               run: |
+                  set -e
                   for i in {1..40}; do
-                    if curl -fsS "http://localhost:${API_PORT}/health" >/dev/null; then
+                    if curl -fsSL \
+                        -H "X-Api-Key: ${API_KEY}" \
+                        "http://localhost:${API_PORT}/health" >/dev/null 2>&1; then
                       echo "API is healthy"; exit 0
                     fi
-                    echo "Waiting for API... ($i/40)"; sleep 3
+                    echo "Waiting for API... ($i/40)"
+                    sleep 3
                   done
-                  echo "API failed to become healthy"; exit 1
+                  echo "::group::API logs"
+                  docker compose -f docker-compose.yml logs --no-color api | tail -n 400 || true
+                  echo "::endgroup::"
+                  exit 1
 
-            - name: Smoke check
+            - name: Smoke check (public ping)
+              env:
+                  API_KEY: ${{ secrets.API_KEY }}
               run: |
-                  curl -fsS -H "X-Api-Key: ${API_KEY}" "http://localhost:${API_PORT}/health" >/dev/null
+                  curl -fsSL -H "X-Api-Key: ${API_KEY}" \
+                    "http://localhost:${API_PORT}/api/employees/ping" | jq .
 
             - name: Dump logs on failure
               if: failure()
