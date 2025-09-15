@@ -1,10 +1,12 @@
+using CTCare.Infrastructure.Persistence;
+
 using Microsoft.OpenApi.Models;
 
 namespace CTCare.Api.Extensions;
 
 public static class SwaggerExtensions
 {
-    public static IServiceCollection AddSwaggerWithJwt(this IServiceCollection services)
+    public static IServiceCollection AddSwaggerWithJwtAndApiKey(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>
@@ -18,6 +20,8 @@ public static class SwaggerExtensions
 
             c.CustomSchemaIds(t => t.FullName?.Replace("+", "."));
 
+            c.SwaggerDoc("v1", new() { Title = "CTCare API", Version = "v1" });
+
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
@@ -25,32 +29,25 @@ public static class SwaggerExtensions
                 Scheme = "Bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Description = "Enter 'Bearer {token}'"
+                Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}"
             });
 
             c.AddSecurityDefinition("XApiKey", new OpenApiSecurityScheme
             {
                 In = ParameterLocation.Header,
-                Name = "X-Api-Key",
+                Name = ApiKeyAuthOptions.HeaderName,
                 Type = SecuritySchemeType.ApiKey,
-                Description = "API key required"
+                Description = "CTCare API key header"
             });
 
             c.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
-                        Name = "Bearer"
-                    },
+                    new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
                     Array.Empty<string>()
-                }    ,
+                },
                 {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "XApiKey" }
-                    },
+                    new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ApiKey" } },
                     Array.Empty<string>()
                 }
             });

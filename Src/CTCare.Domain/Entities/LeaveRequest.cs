@@ -1,0 +1,24 @@
+using CTCare.Domain.Enums;
+using CTCare.Domain.Primitives;
+
+namespace CTCare.Domain.Entities;
+
+public class LeaveRequest: BaseEntity
+{
+    public Guid EmployeeId { get; set; }
+    public Guid LeaveTypeId { get; set; }
+    public DateTimeOffset StartDate { get; set; }
+    public DateTimeOffset EndDate { get; set; }
+    public decimal DurationDays { get; set; }
+    public string? Reason { get; set; }
+    public LeaveStatus Status { get; set; }
+    public DateTimeOffset SubmittedAt { get; set; } = DateTimeOffset.UtcNow;
+    public Guid? FinalApproverId { get; set; }
+    public DateTimeOffset? FinalizedAt { get; set; }
+    public string? RejectionReason { get; set; }
+
+    public Employee Employee { get; set; } = default!;
+    public LeaveType LeaveType { get; set; } = default!;
+    public ICollection<LeaveApprovalStep> ApprovalFlow { get; set; } = new List<LeaveApprovalStep>();
+    public ICollection<LeaveDocument> Documents { get; set; } = new List<LeaveDocument>();
+}
