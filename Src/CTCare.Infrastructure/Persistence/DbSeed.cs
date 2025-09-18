@@ -3,6 +3,7 @@ using System.Globalization;
 using CTCare.Domain.Entities;
 using CTCare.Domain.Enums;
 using CTCare.Infrastructure.Security;
+using CTCare.Shared.Utilities;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,7 @@ public static class DbSeed
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeed");
         var cfg = sp.GetRequiredService<IConfiguration>();
         var env = sp.GetRequiredService<IHostEnvironment>();
+        var hasher = sp.GetRequiredService<IPasswordHasher>();
 
         await db.Database.MigrateAsync();
 
@@ -26,13 +28,13 @@ public static class DbSeed
 
         try
         {
-            // 1. Departments
+            // Departments
             var departmentsToEnsure = new (string Code, string Name, string? Description)[]
             {
                 ("ENG", "Engineering", "Engineering & Platform"),
                 ("OPS", "Operations", "Ops & Support"),
                 ("FIN", "Finance", "Finance & Accounting"),
-                ("HR",  "Human Resources", "People & Culture"),
+                ("HR", "Human Resources", "People & Culture"),
                 ("CLN", "Clinical", "Clinical Programs")
             };
 
@@ -55,10 +57,11 @@ public static class DbSeed
                         logger.LogInformation("Seed: Department {Code} updated.", code);
                     }
                 }
+
                 deptMap[code] = dept;
             }
 
-            // 2. Teams (nested under Departments)
+            // Teams (nested under Departments)
             // Engineering sub_teams
             var teamsByDept = new Dictionary<string, (string Code, string Name, string? Desc)[]>
             {
@@ -132,7 +135,7 @@ public static class DbSeed
                 }
             }
 
-            // 3. LeaveTypes
+            // LeaveTypes
             var leaveTypes = new (string Name, bool IsPaid, int MaxDays, string? Desc)[]
             {
                 ("Annual", true, 30, "Annual paid leave"),
@@ -164,17 +167,20 @@ public static class DbSeed
 
                     if (lt.IsPaid != paid)
                     {
-                        lt.IsPaid = paid; changed = true;
+                        lt.IsPaid = paid;
+                        changed = true;
                     }
 
                     if (lt.MaxDaysPerYear != max)
                     {
-                        lt.MaxDaysPerYear = max; changed = true;
+                        lt.MaxDaysPerYear = max;
+                        changed = true;
                     }
 
                     if (lt.Description != desc)
                     {
-                        lt.Description = desc; changed = true;
+                        lt.Description = desc;
+                        changed = true;
                     }
 
                     if (changed)
@@ -184,42 +190,122 @@ public static class DbSeed
                 }
             }
 
-            // 4. Optional sample Employee (dev-only) to validate relations
-            if (env.IsDevelopment())
+            // Roles
+            if (!await db.Roles.AnyAsync())
             {
-                var eng = deptMap["ENG"];
-                var plat = teamMap[(eng.Code, "PLT")];
-
-                var adminEmail = "admin@gmail.com";
-                var exists = await db.Employees.AnyAsync(e => e.Email == adminEmail);
-                if (!exists)
+                var roles = Enum.GetValues<UserRoles>().Select(r => new Role
                 {
-                    var code = await NextEmployeeCodeAsync(db);
-                    var emp = new Employee
-                    {
-                        EmployeeCode = code,
-                        Status = EmploymentStatus.Active,
-                        DateOfHire = DateTimeOffset.UtcNow,
-                        AnnualLeaveDays = 30,
-                        SickLeaveDays = 10,
-                        AnnualLeaveBalance = 30,
-                        SickLeaveBalance = 10,
-                        Team = plat,
-                        TeamId = plat.Id,
-                        Designation = "Platform Admin",
-                        Sex = Gender.Male,
-                        Email = adminEmail,
-                        EmailStatus = EmailStatus.Verified,
-                        DepartmentId = eng.Id
-                    };
-                    db.Employees.Add(emp);
-                    logger.LogInformation("Seed: Dev employee {Email} created.", adminEmail);
-                }
+                    Id = SequentialGuid.NewGuid(),
+                    Name = r.ToString(),
+                    Description = $"System role: {r}"
+                }).ToList();
+
+                db.Roles.AddRange(roles);
+                logger.LogInformation("Seed: Default roles created.");
+
+                await db.SaveChangesAsync();
             }
 
-            // 5. API Keys
+
+            // Sample Employees + Manager relationship
+            var platTeam = teamMap[("ENG", "PLT")];
+
+            var managerEmail = "manager@gmail.com";
+            var devEmail = "dev@gmail.com";
+
+            var manager = await db.Employees.FirstOrDefaultAsync(e => e.Email == managerEmail);
+            if (manager is null)
+            {
+                manager = new Employee
+                {
+                    EmployeeCode = await NextEmployeeCodeAsync(db),
+                    Status = EmploymentStatus.Active,
+                    EmployeeType = EmployeeType.FullTime,
+                    DateOfHire = DateTimeOffset.UtcNow,
+                    AnnualLeaveDays = 30,
+                    SickLeaveDays = 10,
+                    AnnualLeaveBalance = 30,
+                    SickLeaveBalance = 10,
+                    Team = platTeam,
+                    Designation = "Engineering Manager",
+                    Sex = Gender.Male,
+                    Email = managerEmail,
+                    EmailStatus = EmailStatus.Verified,
+                    DepartmentId = platTeam.DepartmentId,
+                    FirstName = "John",
+                    LastName = "Doe"
+                };
+
+                db.Employees.Add(manager);
+                await db.SaveChangesAsync();
+            }
+
+            var dev = await db.Employees.FirstOrDefaultAsync(e => e.Email == devEmail);
+            if (dev is null)
+            {
+                dev = new Employee
+                {
+                    EmployeeCode = await NextEmployeeCodeAsync(db),
+                    Status = EmploymentStatus.Active,
+                    EmployeeType = EmployeeType.FullTime,
+                    DateOfHire = DateTimeOffset.UtcNow,
+                    AnnualLeaveDays = 30,
+                    SickLeaveDays = 10,
+                    AnnualLeaveBalance = 30,
+                    SickLeaveBalance = 10,
+                    Team = platTeam,
+                    Designation = "Software Developer",
+                    Sex = Gender.Male,
+                    Email = devEmail,
+                    EmailStatus = EmailStatus.Verified,
+                    DepartmentId = platTeam.DepartmentId,
+                    Manager = manager,
+                    FirstName = "John",
+                    LastName = "Doe"
+                };
+                db.Employees.Add(dev);
+                await db.SaveChangesAsync();
+            }
+
+            var (hash, salt) = hasher.Hash("$Angelo123$$##$Angelo123$$##");
+
+            // Users + UserRoles
+            if (!await db.UserAccounts.AnyAsync(u => u.Email == managerEmail))
+            {
+                var user = new User
+                {
+                    Email = managerEmail,
+                    EmailConfirmed = true,
+                    PasswordHash = hash,
+                    PasswordSalt = salt
+                };
+
+                db.UserAccounts.Add(user);
+
+                var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == UserRoles.EngineeringManager.ToString());
+
+                db.UserRoles.Add(new UserRole { User = user, Role = role });
+            }
+
+            if (!await db.UserAccounts.AnyAsync(u => u.Email == devEmail))
+            {
+                var user = new User
+                {
+                    Email = devEmail,
+                    EmailConfirmed = true,
+                    PasswordHash = hash,
+                    PasswordSalt = salt
+                };
+
+                db.UserAccounts.Add(user);
+
+                var role = await db.Roles.FirstAsync(r => r.Name == UserRoles.SoftwareDeveloper.ToString());
+                db.UserRoles.Add(new UserRole { User = user, Role = role });
+            }
+
+            // API Keys
             // Prefer reading the first configured API key from configuration (Auth:ApiKeys:0)
-            var configuredFirstKey = cfg.GetSection("Auth:ApiKeys").Get<string[]>()?.FirstOrDefault();
+            var configuredFirstKey = cfg.GetSection("Api:ApiKeys").Get<string[]>()?.FirstOrDefault();
             if (!await db.ApiKeys.AnyAsync())
             {
                 var rawKey = string.IsNullOrWhiteSpace(configuredFirstKey)
@@ -236,7 +322,58 @@ public static class DbSeed
                     LastUsedAt = DateTimeOffset.UtcNow,
                 });
 
-                logger.LogInformation("Seed: API key created (Prefix={Prefix}).", ApiKeyUtilities.GetPrefix(rawKey));
+                logger.LogInformation("Seed: API key created (Prefix={Prefix}).",
+                    ApiKeyUtilities.GetPrefix(rawKey));
+            }
+
+            var sick = await db.LeaveTypes.FirstAsync(x => x.Name == "Sick");
+            var pol = await db.LeavePolicies.FirstOrDefaultAsync(p => p.LeaveTypeId == sick.Id);
+
+            if (pol is null)
+            {
+                db.LeavePolicies.Add(new LeavePolicy
+                {
+                    LeaveTypeId = sick.Id,
+                    MaxDaysPerYear = 12m,
+                    RequiresManagerApproval = true,
+                    RequiresHRApproval = false,
+                    ApprovalSteps = 1
+                });
+                logger.LogInformation("Seed: LeavePolicy(Sick)=12d, mgr approval, 1 step.");
+            }
+            else
+            {
+                // keep it up to date if changed in config
+                var changed = false;
+                if (pol.MaxDaysPerYear != 12m)
+                {
+                    pol.MaxDaysPerYear = 12m;
+                    changed = true;
+                }
+
+                if (!pol.RequiresManagerApproval)
+                {
+                    pol.RequiresManagerApproval = true;
+                    changed = true;
+                }
+
+                if (pol.RequiresHRApproval)
+                {
+                    pol.RequiresHRApproval = false;
+                    changed = true;
+                }
+
+                if (pol.ApprovalSteps != 1)
+                {
+
+                    pol.ApprovalSteps = 1;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    logger.LogInformation("Seed: LeavePolicy(Sick) updated.");
+                }
             }
 
             await db.SaveChangesAsync();

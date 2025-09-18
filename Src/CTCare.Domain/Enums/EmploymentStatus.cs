@@ -1,8 +1,11 @@
 namespace CTCare.Domain.Enums;
+
 public enum EmploymentStatus
 {
     Active,
     Suspended,
-    Terminated
+    Terminated,
+    Pending,
+    Retired,
+    OnLeave
 }
-

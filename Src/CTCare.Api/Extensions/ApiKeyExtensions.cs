@@ -1,31 +1,62 @@
-namespace CTCare.Api.Extensions;
+// ApiKeyExtensions.cs
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
 
-public sealed record ApiKeyOptions(string[] Keys);
+namespace CTCare.Api.Extensions;
 
 public static class ApiKeyExtensions
 {
-    public static IServiceCollection AddApiKeyAuthOptions(this IServiceCollection services)
+    public sealed class ApiKeyOptions
     {
-        var sp = services.BuildServiceProvider();
-        var cfg = sp.GetRequiredService<IConfiguration>();
-        var keys = cfg.GetSection("Auth:ApiKeys").Get<string[]>() ?? Array.Empty<string>();
-        services.AddSingleton(new ApiKeyOptions(keys));
+        public string[] Keys { get; init; } = Array.Empty<string>();
+        public string[] KeylessPaths { get; init; } = Array.Empty<string>();
+    }
+
+    public static IServiceCollection AddApiKeyAuthOptions(this IServiceCollection services, IConfiguration cfg)
+    {
+        services.Configure<ApiKeyOptions>(cfg.GetSection("Api"));
         return services;
     }
 
-    public static IApplicationBuilder UseApiKeyGate(this IApplicationBuilder app)
+    // IMPORTANT: This middleware must run AFTER UseRouting so endpoint metadata is available
+    public static IApplicationBuilder UseApiKeyGate(this IApplicationBuilder app, IConfiguration cfg, IWebHostEnvironment env)
     {
         return app.Use(async (ctx, next) =>
         {
-            var path = ctx.Request.Path.Value ?? string.Empty;
-            if (path.StartsWith("/swagger") || path.StartsWith("/health") || path.StartsWith("/hangfire"))
+            if (HttpMethods.IsOptions(ctx.Request.Method))
             {
                 await next();
                 return;
             }
 
-            var opts = ctx.RequestServices.GetRequiredService<ApiKeyOptions>();
+            // Allow endpoints marked [AllowAnonymous]
+            var endpoint = ctx.GetEndpoint();
+            if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null)
+            {
+                await next();
+                return;
+            }
 
+            var opts = ctx.RequestServices.GetRequiredService<IOptions<ApiKeyOptions>>().Value;
+            var path = ctx.Request.Path.Value ?? string.Empty;
+
+            // Whitelist prefixes
+            if (opts.KeylessPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+            {
+                await next();
+                return;
+            }
+
+            // Dev-only convenience: allow ?api_key=... for quick manual tests
+            if (env.IsDevelopment() &&
+                ctx.Request.Query.TryGetValue("api_key", out var qk) &&
+                opts.Keys.Contains(qk.ToString()))
+            {
+                await next();
+                return;
+            }
+
+            // Header check
             if (!ctx.Request.Headers.TryGetValue("X-Api-Key", out var provided) ||
                 !opts.Keys.Contains(provided.ToString()))
             {

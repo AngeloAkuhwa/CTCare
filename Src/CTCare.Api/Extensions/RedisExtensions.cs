@@ -16,11 +16,7 @@ public static class RedisExtensions
         cfg.GetSection(nameof(RedisSetting)).Bind(settings);
         services.AddSingleton(settings);
 
-        var (endpoint, password) = Helper.NormalizeRedis(
-            env.IsProduction() || Helper.IsRunningInContainer()
-                ? settings.ConnectionString
-                : settings.ConnectionStringLocalDEv,
-            settings.Password);
+        var (endpoint, password) = env.IsProduction() || Helper.IsRunningInContainer() ? Helper.NormalizeRedis(settings.ConnectionString ,settings.Password) : (settings.ConnectionStringLocalDEv, "");
 
         services.AddSingleton<IConnectionMultiplexer>(_ =>
         {
@@ -33,7 +29,19 @@ public static class RedisExtensions
                 Ssl = false, // internal network  => false
             };
 
-            opt.EndPoints.Add(endpoint);
+            if (env.IsProduction() || Helper.IsRunningInContainer())
+            {
+                opt.EndPoints.Add(endpoint);
+            }
+            else
+            {
+                opt = ConfigurationOptions.Parse(endpoint, true);
+                opt.AbortOnConnectFail = settings.AbortOnConnectFail;
+                opt.ConnectRetry = settings.ConnectRetry;
+                opt.ConnectTimeout = settings.ConnectTimeout;
+                opt.SyncTimeout = settings.SyncTimeOut;
+                opt.Ssl = false; // internal network  => false
+            }
 
             if (!string.IsNullOrEmpty(password))
             {
@@ -54,13 +62,22 @@ public static class RedisExtensions
                 Ssl = false
             };
 
-            co.EndPoints.Add(endpoint);
+            if (env.IsProduction() || Helper.IsRunningInContainer())
+            {
+                co.EndPoints.Add(endpoint);
+            }
+            else
+            {
+                o.Configuration = endpoint;
+            }
+
             if (!string.IsNullOrEmpty(password))
             {
                 co.Password = password;
             }
 
             o.ConfigurationOptions = co;
+           //o.InstanceName = "ctcare:";
         });
 
         return services;

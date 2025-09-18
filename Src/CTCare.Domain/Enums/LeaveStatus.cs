@@ -1,10 +1,10 @@
-namespace CTCare.Domain.Enums
+namespace CTCare.Domain.Enums;
+
+public enum LeaveStatus
 {
-    public enum LeaveStatus
-    {
-        Pending,
-        Approved,
-        Rejected,
-        Cancelled
-    }
+    Pending,
+    InReview,
+    Approved,
+    Rejected,
+    Cancelled
 }

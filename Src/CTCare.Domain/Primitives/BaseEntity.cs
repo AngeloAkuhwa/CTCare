@@ -5,7 +5,7 @@ using CTCare.Shared.Utilities;
 namespace CTCare.Domain.Primitives;
 public abstract class BaseEntity
 {
-    public Guid Id { get; set; } = SequentialGuid.NewGuid();
+    public Guid Id { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public Guid? CreatedBy { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }

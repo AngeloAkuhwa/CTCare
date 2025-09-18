@@ -76,6 +76,11 @@ public sealed class AuditSaveChangesInterceptor(IHttpContextAccessor http): Save
                 {
                     var logger = ctx.GetService<ILogger<AuditSaveChangesInterceptor>>();
                     logger.LogError(ex, "Failed to persist audit logs ({Count}).", logs.Count);
+                    // detach so they won’t be re-inserted
+                    foreach (var log in logs)
+                    {
+                        ctx.Entry(log).State = EntityState.Detached;
+                    }
                 }
                 catch
                 {
@@ -132,6 +137,7 @@ public sealed class AuditSaveChangesInterceptor(IHttpContextAccessor http): Save
                 case EntityState.Added:
                     action = "Create";
                     newDoc = ValuesToJson(entry.CurrentValues);
+                    changedColumns = entry.CurrentValues.Properties.Select(p => p.Name).ToArray();
                     break;
 
                 case EntityState.Modified:
@@ -144,6 +150,7 @@ public sealed class AuditSaveChangesInterceptor(IHttpContextAccessor http): Save
                 case EntityState.Deleted:
                     action = "Delete";
                     oldDoc = ValuesToJson(entry.OriginalValues);
+                    changedColumns = entry.OriginalValues.Properties.Select(p => p.Name).ToArray();
                     break;
 
                 default:
@@ -207,11 +214,11 @@ public sealed class AuditSaveChangesInterceptor(IHttpContextAccessor http): Save
         return JsonSerializer.SerializeToDocument(dict, JsonOpts);
     }
 
-    private static string? BuildMetadata(HttpContext? http)
+    private static string BuildMetadata(HttpContext? http)
     {
         if (http is null)
         {
-            return null;
+            return JsonSerializer.Serialize(new { source = "system" }, JsonOpts);
         }
 
         var ip = http.Connection.RemoteIpAddress?.ToString();
@@ -233,22 +240,23 @@ public sealed class AuditSaveChangesInterceptor(IHttpContextAccessor http): Save
         return JsonSerializer.Serialize(md, JsonOpts);
     }
 
-    private static (Guid? id, string? name) GetActor(ClaimsPrincipal? user)
+    private static (Guid? id, string name) GetActor(ClaimsPrincipal? user)
     {
         if (user?.Identity?.IsAuthenticated != true)
         {
-            return (null, null);
+            return (null, "system");
         }
 
-        // prefer sub/nameidentifier as Guid; fall back to Name
         var sub = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
                   ?? user.FindFirst("sub")?.Value;
 
         Guid? id = Guid.TryParse(sub, out var g) ? g : null;
         var name = user.Identity?.Name
                    ?? user.FindFirst(ClaimTypes.Email)?.Value
-                   ?? user.FindFirst("preferred_username")?.Value;
+                   ?? user.FindFirst("preferred_username")?.Value
+                   ?? "system";
 
         return (id, name);
     }
+
 }

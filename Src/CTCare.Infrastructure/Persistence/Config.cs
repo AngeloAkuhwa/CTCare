@@ -2,6 +2,7 @@ using CTCare.Domain.Entities;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CTCare.Infrastructure.Persistence
 {
@@ -177,8 +178,7 @@ namespace CTCare.Infrastructure.Persistence
             e.Property(x => x.Revoked).HasDefaultValue(false);
             e.Property(x => x.ExpiresAt).IsRequired();
 
-            // If RefreshToken ties to Employee (or User) via UserId
-            e.HasOne<Employee>() // or your User entity if you have one
+            e.HasOne<Employee>()
                 .WithMany()
                 .HasForeignKey(x => x.EmployeeId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -288,6 +288,31 @@ namespace CTCare.Infrastructure.Persistence
             e.Property(x => x.ExpiresAt).IsRequired(false);
 
             e.HasIndex(x => new { x.Prefix, x.IsDeleted }).IsUnique();
+        }
+    }
+
+    public class UserAccountConfig: IEntityTypeConfiguration<User>
+    {
+        public void Configure(EntityTypeBuilder<User> e)
+        {
+            var emailConverter = new ValueConverter<string, string>(
+                v => (v ?? string.Empty).Trim().ToLowerInvariant(),
+                v => v
+            );
+
+            e.ToTable("UserAccounts");
+            e.HasIndex(x => x.Email).IsUnique();
+            e.Property(u => u.Email)
+                .IsRequired()
+                .HasMaxLength(320)
+                .HasConversion(emailConverter);
+            e.Property(x => x.PasswordHash).HasMaxLength(512).IsRequired();
+            e.Property(x => x.PasswordSalt).HasMaxLength(256).IsRequired();
+
+            e.HasOne(x => x.Employee)
+                 .WithOne(emp => emp.User) 
+                .HasForeignKey<User>(x => x.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -24,4 +24,12 @@ public class EmailSetting
 
     /// <summary>Base delay in milliseconds between retries</summary>
     public int RetryDelayMs { get; set; }
+
+    public string SslMode { get; set; }
+
+    public string ApiKey { get; set; }
+
+    public string ApiSecret { get; set; }
+
+    public string Provider { get; set; }
 }

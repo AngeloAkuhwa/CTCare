@@ -35,6 +35,11 @@ public static class HangfireAndContextExtensions
             // Attach interceptor
             var audit = sp.GetRequiredService<AuditSaveChangesInterceptor>();
             opts.AddInterceptors(audit);
+            if (env.IsDevelopment())
+            {
+                opts.EnableDetailedErrors();
+                opts.EnableSensitiveDataLogging();
+            }
         });
 
         var retries = 0;

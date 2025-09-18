@@ -34,8 +34,8 @@ public static class SecurityExtensions
 
         //Auth specific services registration
         services.AddSingleton(jwtSettings);
-        services.AddSingleton<IAuthorizationHandler, BothJwtAndApiKeyHandler>();
         services.AddScoped<IAuthenticationHandler, ApiKeyAuthHandler>();
+        services.AddScoped<IAuthorizationHandler, BothJwtAndApiKeyHandler>();
 
         services
             .AddAuthentication(options =>
@@ -81,11 +81,18 @@ public static class SecurityExtensions
                         // e.g., heartbeat claim
                         var id = (ClaimsIdentity)ctx.Principal!.Identity!;
                         id.AddClaim(new Claim("token_validated_at", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
+                        var log = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JWT");
+                        log.LogInformation("JWT OK: sub={sub}, aud={aud}, iss={iss}",
+                            ctx.Principal?.FindFirst("sub")?.Value,
+                            ctx.Principal?.FindFirst("aud")?.Value,
+                            ctx.Principal?.FindFirst("iss")?.Value);
                         return Task.CompletedTask;
                     },
                     OnAuthenticationFailed = ctx =>
                     {
                         ctx.Response.Headers.Append("X-Auth-Error", "jwt_auth_failed");
+                        var log = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JWT");
+                        log.LogWarning(ctx.Exception, "JWT failed. Authorization='{Authorization}'", ctx.Request.Headers.Authorization.ToString());
                         return Task.CompletedTask;
                     },
                     OnChallenge = ctx =>
