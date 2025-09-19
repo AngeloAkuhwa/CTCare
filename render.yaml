@@ -84,7 +84,7 @@ services:
           - key: AppSettings__SupportFromAddress
             value: angeloakuhway@gmail.com
 
-            # Auth 
+            # Auth
           - key: Auth__OtpLength
             value: "6"
           - key: Auth__OtpExpiry
@@ -103,6 +103,28 @@ services:
             value: "1.00:00:00"
           - key: Auth__EmailConfirmResendCooldown
             value: "00:10:00"
+
+            # AuthLimits
+          - key: AuthLimits__OtpLength__Min
+            value: "4"
+          - key: AuthLimits__OtpLength__Max
+            value: "8"
+          - key: AuthLimits__OtpExpiry__Min
+            value: "00:01:00"
+          - key: AuthLimits__OtpExpiry__Max
+            value: "00:30:00"
+          - key: AuthLimits__MaxFailedAttempts__Min
+            value: "3"
+          - key: AuthLimits__MaxFailedAttempts__Max
+            value: "10"
+          - key: AuthLimits__RetryWindowMin
+            value: "00:01:00"
+          - key: AuthLimits__LockoutDurationMin
+            value: "00:01:00"
+          - key: AuthLimits__RefreshTokenValidityDays__Min
+            value: "1"
+          - key: AuthLimits__RefreshTokenValidityDays__Max
+            value: "90"
 
             # Email (SMTP)
           - key: EmailSettings__Provider

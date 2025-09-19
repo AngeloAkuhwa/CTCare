@@ -103,6 +103,18 @@ env:
     Auth__EmailConfirmTokenExpiry: ${{ secrets.Auth__EmailConfirmTokenExpiry }}
     Auth__EmailConfirmResendCooldown: ${{ secrets.Auth__EmailConfirmResendCooldown }}
 
+    # NEW — AuthLimits (create these repo secrets)
+    AUTHLIMITS__OTPLENGTH__MIN: ${{ secrets.AUTHLIMITS__OTPLENGTH__MIN }}
+    AUTHLIMITS__OTPLENGTH__MAX: ${{ secrets.AUTHLIMITS__OTPLENGTH__MAX }}
+    AUTHLIMITS__OTPEXPIRY__MIN: ${{ secrets.AUTHLIMITS__OTPEXPIRY__MIN }}
+    AUTHLIMITS__OTPEXPIRY__MAX: ${{ secrets.AUTHLIMITS__OTPEXPIRY__MAX }}
+    AUTHLIMITS__MAXFAILEDATTEMPTS__MIN: ${{ secrets.AUTHLIMITS__MAXFAILEDATTEMPTS__MIN }}
+    AUTHLIMITS__MAXFAILEDATTEMPTS__MAX: ${{ secrets.AUTHLIMITS__MAXFAILEDATTEMPTS__MAX }}
+    AUTHLIMITS__RETRYWINDOWMIN: ${{ secrets.AUTHLIMITS__RETRYWINDOWMIN }}
+    AUTHLIMITS__LOCKOUTDURATIONMIN: ${{ secrets.AUTHLIMITS__LOCKOUTDURATIONMIN }}
+    AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN }}
+    AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX }}
+
 # Prevent wasted builds
 concurrency:
     group: net-ci-${{ github.ref }} # One run per branch/PR at a time
