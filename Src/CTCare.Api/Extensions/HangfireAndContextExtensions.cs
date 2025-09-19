@@ -25,16 +25,12 @@ public static class HangfireAndContextExtensions
         }
 
         services.AddHttpContextAccessor();
-        services.AddScoped<AuditSaveChangesInterceptor>();
 
         //Database Context registration
         services.AddDbContext<CtCareDbContext>((sp, opts) =>
         {
             opts.UseNpgsql(conn, npg => npg.MigrationsAssembly(typeof(CtCareDbContext).Assembly.FullName));
 
-            // Attach interceptor
-            var audit = sp.GetRequiredService<AuditSaveChangesInterceptor>();
-            opts.AddInterceptors(audit);
             if (env.IsDevelopment())
             {
                 opts.EnableDetailedErrors();

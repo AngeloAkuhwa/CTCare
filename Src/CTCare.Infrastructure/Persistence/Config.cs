@@ -191,6 +191,12 @@ namespace CTCare.Infrastructure.Persistence
         {
             e.ToTable("AuditLogs");
 
+            e.HasKey(a => a.Id);
+            e.Property(a => a.Id)
+                .HasColumnType("uuid")
+                .ValueGeneratedOnAdd()
+                .HasDefaultValueSql("gen_random_uuid()");
+
             e.Property(x => x.Action)
                 .HasMaxLength(100)
                 .IsRequired();

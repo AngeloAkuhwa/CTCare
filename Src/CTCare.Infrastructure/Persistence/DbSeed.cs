@@ -28,166 +28,177 @@ public static class DbSeed
 
         try
         {
-            // Departments
-            var departmentsToEnsure = new (string Code, string Name, string? Description)[]
-            {
-                ("ENG", "Engineering", "Engineering & Platform"),
-                ("OPS", "Operations", "Ops & Support"),
-                ("FIN", "Finance", "Finance & Accounting"),
-                ("HR", "Human Resources", "People & Culture"),
-                ("CLN", "Clinical", "Clinical Programs")
-            };
-
             var deptMap = new Dictionary<string, Department>(StringComparer.OrdinalIgnoreCase);
-            foreach (var (code, name, desc) in departmentsToEnsure)
-            {
-                var dept = await db.Departments.FirstOrDefaultAsync(d => d.Code == code);
-                if (dept is null)
-                {
-                    dept = new Department { Id = SequentialGuid.NewGuid(), Code = code, Name = name, Description = desc };
-                    db.Departments.Add(dept);
-                    logger.LogInformation("Seed: Department {Code} created.", code);
-                }
-                else
-                {
-                    if (dept.Name != name || dept.Description != desc)
-                    {
-                        dept.Name = name;
-                        dept.Description = desc;
-                        logger.LogInformation("Seed: Department {Code} updated.", code);
-                    }
-                }
-
-                deptMap[code] = dept;
-            }
-
-            // Teams (nested under Departments)
-            // Engineering sub_teams
-            var teamsByDept = new Dictionary<string, (string Code, string Name, string? Desc)[]>
-            {
-                ["ENG"] =
-                [
-                    ("HSP", "Hospice", "Engineering - Hospice"),
-                    ("HHC", "Home Health", "Engineering - Home Health"),
-                    ("HCR", "Home Care", "Engineering - Home Care"),
-                    ("PLT", "Platform", "Platform & Shared Services"),
-                    ("INT", "Integrations", "Integrations & Data")
-                ],
-                ["OPS"] =
-                [
-                    ("SOP", "Support Ops", "Support & Operations"),
-                    ("NOC", "NOC", "Network operations center")
-                ],
-                ["FIN"] =
-                [
-                    ("ACT", "Accounting", "Accounting & AP/AR"),
-                    ("REV", "Revenue", "Billing & Revenue")
-                ],
-                ["HR"] =
-                [
-                    ("TAL", "Talent", "Talent & Recruiting"),
-                    ("BEN", "Benefits", "Comp & Benefits")
-                ],
-                ["CLN"] =
-                [
-                    ("CQA", "Clinical QA", "Clinical QA"),
-                    ("EDU", "Education", "Clinician Education")
-                ]
-            };
-
             var teamMap = new Dictionary<(string DeptCode, string TeamCode), Team>();
 
-            foreach (var kv in teamsByDept)
+            if (!await db.Departments.AnyAsync())
             {
-                if (!deptMap.TryGetValue(kv.Key, out var dept))
+                // Departments
+                var departmentsToEnsure = new (string Code, string Name, string? Description)[]
                 {
-                    continue;
-                }
+                    ("ENG", "Engineering", "Engineering & Platform"),
+                    ("OPS", "Operations", "Ops & Support"),
+                    ("FIN", "Finance", "Finance & Accounting"),
+                    ("HR", "Human Resources", "People & Culture"),
+                    ("CLN", "Clinical", "Clinical Programs")
+                };
 
-                foreach (var (code, name, desc) in kv.Value)
+                foreach (var (code, name, desc) in departmentsToEnsure)
                 {
-                    var existing = await db.Teams.FirstOrDefaultAsync(t =>
-                        t.DepartmentId == dept.Id && t.Code == code);
-
-                    if (existing is null)
+                    var dept = await db.Departments.FirstOrDefaultAsync(d => d.Code == code);
+                    if (dept is null)
                     {
-                        existing = new Team
-                        {
-                            Id = SequentialGuid.NewGuid(),
-                            DepartmentId = dept.Id,
-                            Code = code,
-                            Name = name,
-                            Description = desc
-                        };
-                        db.Teams.Add(existing);
-                        logger.LogInformation("Seed: Team {Dept}:{Code} created.", dept.Code, code);
+                        dept = new Department { Id = SequentialGuid.NewGuid(), Code = code, Name = name, Description = desc };
+                        db.Departments.Add(dept);
+                        logger.LogInformation("Seed: Department {Code} created.", code);
                     }
                     else
                     {
-                        if (existing.Name != name || existing.Description != desc)
+                        if (dept.Name != name || dept.Description != desc)
                         {
-                            existing.Name = name;
-                            existing.Description = desc;
-                            logger.LogInformation("Seed: Team {Dept}:{Code} updated.", dept.Code, code);
+                            dept.Name = name;
+                            dept.Description = desc;
+                            logger.LogInformation("Seed: Department {Code} updated.", code);
                         }
                     }
 
-                    teamMap[(dept.Code, code)] = existing;
+                    deptMap[code] = dept;
                 }
             }
 
-            // LeaveTypes
-            var leaveTypes = new (string Name, bool IsPaid, int MaxDays, string? Desc)[]
+            if (!await db.Teams.AnyAsync())
             {
-                ("Annual", true, 30, "Annual paid leave"),
-                ("Sick", true, 10, "Sick/Medical leave"),
-                ("Maternity", true, 90, "Maternity leave"),
-                ("Paternity", true, 10, "Paternity leave"),
-                ("Bereavement", true, 5, "Bereavement leave"),
-                ("Unpaid", false, 365, "Unpaid leave")
-            };
 
-            foreach (var (name, paid, max, desc) in leaveTypes)
-            {
-                var lt = await db.LeaveTypes.FirstOrDefaultAsync(x => x.Name == name);
-                if (lt is null)
+                // Teams (nested under Departments)
+                // Engineering sub_teams
+                var teamsByDept = new Dictionary<string, (string Code, string Name, string? Desc)[]>
                 {
-                    db.LeaveTypes.Add(new LeaveType
-                    {
-                        Id = SequentialGuid.NewGuid(),
-                        Name = name,
-                        IsPaid = paid,
-                        MaxDaysPerYear = max,
-                        Description = desc
-                    });
+                    ["ENG"] =
+                    [
+                        ("HSP", "Hospice", "Engineering - Hospice"),
+                        ("HHC", "Home Health", "Engineering - Home Health"),
+                        ("HCR", "Home Care", "Engineering - Home Care"),
+                        ("PLT", "Platform", "Platform & Shared Services"),
+                        ("INT", "Integrations", "Integrations & Data")
+                    ],
+                    ["OPS"] =
+                    [
+                        ("SOP", "Support Ops", "Support & Operations"),
+                        ("NOC", "NOC", "Network operations center")
+                    ],
+                    ["FIN"] =
+                    [
+                        ("ACT", "Accounting", "Accounting & AP/AR"),
+                        ("REV", "Revenue", "Billing & Revenue")
+                    ],
+                    ["HR"] =
+                    [
+                        ("TAL", "Talent", "Talent & Recruiting"),
+                        ("BEN", "Benefits", "Comp & Benefits")
+                    ],
+                    ["CLN"] =
+                    [
+                        ("CQA", "Clinical QA", "Clinical QA"),
+                        ("EDU", "Education", "Clinician Education")
+                    ]
+                };
 
-                    logger.LogInformation("Seed: LeaveType {Name} created.", name);
+                foreach (var kv in teamsByDept)
+                {
+                    if (!deptMap.TryGetValue(kv.Key, out var dept))
+                    {
+                        continue;
+                    }
+
+                    foreach (var (code, name, desc) in kv.Value)
+                    {
+                        var existing = await db.Teams.FirstOrDefaultAsync(t =>
+                            t.DepartmentId == dept.Id && t.Code == code);
+
+                        if (existing is null)
+                        {
+                            existing = new Team
+                            {
+                                Id = SequentialGuid.NewGuid(),
+                                DepartmentId = dept.Id,
+                                Code = code,
+                                Name = name,
+                                Description = desc
+                            };
+                            db.Teams.Add(existing);
+                            logger.LogInformation("Seed: Team {Dept}:{Code} created.", dept.Code, code);
+                        }
+                        else
+                        {
+                            if (existing.Name != name || existing.Description != desc)
+                            {
+                                existing.Name = name;
+                                existing.Description = desc;
+                                logger.LogInformation("Seed: Team {Dept}:{Code} updated.", dept.Code, code);
+                            }
+                        }
+
+                        teamMap[(dept.Code, code)] = existing;
+                    }
                 }
-                else
+
+            }
+
+            if (!await db.LeaveTypes.AnyAsync())
+            {
+                // LeaveTypes
+                var leaveTypes = new (string Name, bool IsPaid, int MaxDays, string? Desc)[]
                 {
-                    var changed = false;
+                    ("Annual", true, 30, "Annual paid leave"),
+                    ("Sick", true, 10, "Sick/Medical leave"),
+                    ("Maternity", true, 90, "Maternity leave"),
+                    ("Paternity", true, 10, "Paternity leave"),
+                    ("Bereavement", true, 5, "Bereavement leave"),
+                    ("Unpaid", false, 365, "Unpaid leave")
+                };
 
-                    if (lt.IsPaid != paid)
+                foreach (var (name, paid, max, desc) in leaveTypes)
+                {
+                    var lt = await db.LeaveTypes.FirstOrDefaultAsync(x => x.Name == name);
+                    if (lt is null)
                     {
-                        lt.IsPaid = paid;
-                        changed = true;
+                        db.LeaveTypes.Add(new LeaveType
+                        {
+                            Id = SequentialGuid.NewGuid(),
+                            Name = name,
+                            IsPaid = paid,
+                            MaxDaysPerYear = max,
+                            Description = desc
+                        });
+
+                        logger.LogInformation("Seed: LeaveType {Name} created.", name);
                     }
-
-                    if (lt.MaxDaysPerYear != max)
+                    else
                     {
-                        lt.MaxDaysPerYear = max;
-                        changed = true;
-                    }
+                        var changed = false;
 
-                    if (lt.Description != desc)
-                    {
-                        lt.Description = desc;
-                        changed = true;
-                    }
+                        if (lt.IsPaid != paid)
+                        {
+                            lt.IsPaid = paid;
+                            changed = true;
+                        }
 
-                    if (changed)
-                    {
-                        logger.LogInformation("Seed: LeaveType {Name} updated.", name);
+                        if (lt.MaxDaysPerYear != max)
+                        {
+                            lt.MaxDaysPerYear = max;
+                            changed = true;
+                        }
+
+                        if (lt.Description != desc)
+                        {
+                            lt.Description = desc;
+                            changed = true;
+                        }
+
+                        if (changed)
+                        {
+                            logger.LogInformation("Seed: LeaveType {Name} updated.", name);
+                        }
                     }
                 }
             }
@@ -208,105 +219,107 @@ public static class DbSeed
                 await db.SaveChangesAsync();
             }
 
-
-            // Sample Employees + Manager relationship
-            var platTeam = teamMap[("ENG", "PLT")];
-
-            var managerEmail = "manager@gmail.com";
-            var devEmail = "dev@gmail.com";
-
-            var manager = await db.Employees.FirstOrDefaultAsync(e => e.Email == managerEmail);
-            if (manager is null)
+            if (!await db.Employees.AnyAsync())
             {
-                manager = new Employee
+                // Sample Employees + Manager relationship
+                var platTeam = teamMap[("ENG", "PLT")];
+
+                var managerEmail = "manager@gmail.com";
+                var devEmail = "dev@gmail.com";
+
+                var manager = await db.Employees.FirstOrDefaultAsync(e => e.Email == managerEmail);
+                if (manager is null)
                 {
-                    Id = SequentialGuid.NewGuid(),
-                    EmployeeCode = await NextEmployeeCodeAsync(db),
-                    Status = EmploymentStatus.Active,
-                    EmployeeType = EmployeeType.FullTime,
-                    DateOfHire = DateTimeOffset.UtcNow,
-                    AnnualLeaveDays = 30,
-                    SickLeaveDays = 10,
-                    AnnualLeaveBalance = 30,
-                    SickLeaveBalance = 10,
-                    Team = platTeam,
-                    Designation = "Engineering Manager",
-                    Sex = Gender.Male,
-                    Email = managerEmail,
-                    EmailStatus = EmailStatus.Verified,
-                    DepartmentId = platTeam.DepartmentId,
-                    FirstName = "John",
-                    LastName = "Doe"
-                };
+                    manager = new Employee
+                    {
+                        Id = SequentialGuid.NewGuid(),
+                        EmployeeCode = await NextEmployeeCodeAsync(db),
+                        Status = EmploymentStatus.Active,
+                        EmployeeType = EmployeeType.FullTime,
+                        DateOfHire = DateTimeOffset.UtcNow,
+                        AnnualLeaveDays = 30,
+                        SickLeaveDays = 10,
+                        AnnualLeaveBalance = 30,
+                        SickLeaveBalance = 10,
+                        Team = platTeam,
+                        Designation = "Engineering Manager",
+                        Sex = Gender.Male,
+                        Email = managerEmail,
+                        EmailStatus = EmailStatus.Verified,
+                        DepartmentId = platTeam.DepartmentId,
+                        FirstName = "John",
+                        LastName = "Doe"
+                    };
 
-                db.Employees.Add(manager);
-                await db.SaveChangesAsync();
-            }
+                    db.Employees.Add(manager);
+                    await db.SaveChangesAsync();
+                }
 
-            var dev = await db.Employees.FirstOrDefaultAsync(e => e.Email == devEmail);
-            if (dev is null)
-            {
-                dev = new Employee
+                var dev = await db.Employees.FirstOrDefaultAsync(e => e.Email == devEmail);
+                if (dev is null)
                 {
-                    Id = SequentialGuid.NewGuid(),
-                    EmployeeCode = await NextEmployeeCodeAsync(db),
-                    Status = EmploymentStatus.Active,
-                    EmployeeType = EmployeeType.FullTime,
-                    DateOfHire = DateTimeOffset.UtcNow,
-                    AnnualLeaveDays = 30,
-                    SickLeaveDays = 10,
-                    AnnualLeaveBalance = 30,
-                    SickLeaveBalance = 10,
-                    Team = platTeam,
-                    Designation = "Software Developer",
-                    Sex = Gender.Male,
-                    Email = devEmail,
-                    EmailStatus = EmailStatus.Verified,
-                    DepartmentId = platTeam.DepartmentId,
-                    Manager = manager,
-                    FirstName = "John",
-                    LastName = "Doe"
-                };
-                db.Employees.Add(dev);
-                await db.SaveChangesAsync();
-            }
+                    dev = new Employee
+                    {
+                        Id = SequentialGuid.NewGuid(),
+                        EmployeeCode = await NextEmployeeCodeAsync(db),
+                        Status = EmploymentStatus.Active,
+                        EmployeeType = EmployeeType.FullTime,
+                        DateOfHire = DateTimeOffset.UtcNow,
+                        AnnualLeaveDays = 30,
+                        SickLeaveDays = 10,
+                        AnnualLeaveBalance = 30,
+                        SickLeaveBalance = 10,
+                        Team = platTeam,
+                        Designation = "Software Developer",
+                        Sex = Gender.Male,
+                        Email = devEmail,
+                        EmailStatus = EmailStatus.Verified,
+                        DepartmentId = platTeam.DepartmentId,
+                        Manager = manager,
+                        FirstName = "John",
+                        LastName = "Doe"
+                    };
+                    db.Employees.Add(dev);
+                    await db.SaveChangesAsync();
+                }
 
-            var (hash, salt) = hasher.Hash("$Angelo123$$##$Angelo123$$##");
+                var (hash, salt) = hasher.Hash("$Angelo123$$##$Angelo123$$##");
 
-            // Users + UserRoles
-            if (!await db.UserAccounts.AnyAsync(u => u.Email == managerEmail))
-            {
-                var user = new User
+                // Users + UserRoles
+                if (!await db.UserAccounts.AnyAsync(u => u.Email == managerEmail))
                 {
-                    Id = SequentialGuid.NewGuid(),
-                    Email = managerEmail,
-                    EmailConfirmed = true,
-                    PasswordHash = hash,
-                    PasswordSalt = salt
-                };
+                    var user = new User
+                    {
+                        Id = SequentialGuid.NewGuid(),
+                        Email = managerEmail,
+                        EmailConfirmed = true,
+                        PasswordHash = hash,
+                        PasswordSalt = salt
+                    };
 
-                db.UserAccounts.Add(user);
+                    db.UserAccounts.Add(user);
 
-                var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == UserRoles.EngineeringManager.ToString());
+                    var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == UserRoles.EngineeringManager.ToString());
 
-                db.UserRoles.Add(new UserRole { User = user, Role = role });
-            }
+                    db.UserRoles.Add(new UserRole { User = user, Role = role });
+                }
 
-            if (!await db.UserAccounts.AnyAsync(u => u.Email == devEmail))
-            {
-                var user = new User
+                if (!await db.UserAccounts.AnyAsync(u => u.Email == devEmail))
                 {
-                    Id = SequentialGuid.NewGuid(),
-                    Email = devEmail,
-                    EmailConfirmed = true,
-                    PasswordHash = hash,
-                    PasswordSalt = salt
-                };
+                    var user = new User
+                    {
+                        Id = SequentialGuid.NewGuid(),
+                        Email = devEmail,
+                        EmailConfirmed = true,
+                        PasswordHash = hash,
+                        PasswordSalt = salt
+                    };
 
-                db.UserAccounts.Add(user);
+                    db.UserAccounts.Add(user);
 
-                var role = await db.Roles.FirstAsync(r => r.Name == UserRoles.SoftwareDeveloper.ToString());
-                db.UserRoles.Add(new UserRole { User = user, Role = role });
+                    var role = await db.Roles.FirstAsync(r => r.Name == UserRoles.SoftwareDeveloper.ToString());
+                    db.UserRoles.Add(new UserRole { User = user, Role = role });
+                }
             }
 
             // API Keys
@@ -333,59 +346,62 @@ public static class DbSeed
                     ApiKeyUtilities.GetPrefix(rawKey));
             }
 
-            var sick = await db.LeaveTypes.FirstAsync(x => x.Name == "Sick");
-            var pol = await db.LeavePolicies.FirstOrDefaultAsync(p => p.LeaveTypeId == sick.Id);
-
-            if (pol is null)
+            if (!await db.LeavePolicies.AnyAsync())
             {
-                db.LeavePolicies.Add(new LeavePolicy
+                var sick = await db.LeaveTypes.FirstAsync(x => x.Name == "Sick");
+                var pol = await db.LeavePolicies.FirstOrDefaultAsync(p => p.LeaveTypeId == sick.Id);
+
+                if (pol is null)
                 {
-                    Id = SequentialGuid.NewGuid(),
-                    LeaveTypeId = sick.Id,
-                    MaxDaysPerYear = 12m,
-                    RequiresManagerApproval = true,
-                    RequiresHRApproval = false,
-                    ApprovalSteps = 1
-                });
-                logger.LogInformation("Seed: LeavePolicy(Sick)=12d, mgr approval, 1 step.");
+                    db.LeavePolicies.Add(new LeavePolicy
+                    {
+                        Id = SequentialGuid.NewGuid(),
+                        LeaveTypeId = sick.Id,
+                        MaxDaysPerYear = 12m,
+                        RequiresManagerApproval = true,
+                        RequiresHRApproval = false,
+                        ApprovalSteps = 1
+                    });
+                    logger.LogInformation("Seed: LeavePolicy(Sick)=12d, mgr approval, 1 step.");
+                }
+                else
+                {
+                    // keep it up to date if changed in config
+                    var changed = false;
+                    if (pol.MaxDaysPerYear != 12m)
+                    {
+                        pol.MaxDaysPerYear = 12m;
+                        changed = true;
+                    }
+
+                    if (!pol.RequiresManagerApproval)
+                    {
+                        pol.RequiresManagerApproval = true;
+                        changed = true;
+                    }
+
+                    if (pol.RequiresHRApproval)
+                    {
+                        pol.RequiresHRApproval = false;
+                        changed = true;
+                    }
+
+                    if (pol.ApprovalSteps != 1)
+                    {
+
+                        pol.ApprovalSteps = 1;
+                        changed = true;
+                    }
+
+                    if (changed)
+                    {
+                        logger.LogInformation("Seed: LeavePolicy(Sick) updated.");
+                    }
+                }
+
+                await db.SaveChangesAsync();
+                await tx.CommitAsync();
             }
-            else
-            {
-                // keep it up to date if changed in config
-                var changed = false;
-                if (pol.MaxDaysPerYear != 12m)
-                {
-                    pol.MaxDaysPerYear = 12m;
-                    changed = true;
-                }
-
-                if (!pol.RequiresManagerApproval)
-                {
-                    pol.RequiresManagerApproval = true;
-                    changed = true;
-                }
-
-                if (pol.RequiresHRApproval)
-                {
-                    pol.RequiresHRApproval = false;
-                    changed = true;
-                }
-
-                if (pol.ApprovalSteps != 1)
-                {
-
-                    pol.ApprovalSteps = 1;
-                    changed = true;
-                }
-
-                if (changed)
-                {
-                    logger.LogInformation("Seed: LeavePolicy(Sick) updated.");
-                }
-            }
-
-            await db.SaveChangesAsync();
-            await tx.CommitAsync();
         }
         catch (Exception ex)
         {

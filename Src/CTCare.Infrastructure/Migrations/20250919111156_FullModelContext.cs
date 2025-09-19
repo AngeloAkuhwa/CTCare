@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace CTCare.Infrastructure.Persistence.Migrations
+namespace CTCare.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class FullModelRecereate : Migration
+    public partial class FullModelContext : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -38,7 +38,7 @@ namespace CTCare.Infrastructure.Persistence.Migrations
                 name: "AuditLogs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     ActorId = table.Column<Guid>(type: "uuid", nullable: true),
                     ActorName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Action = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
