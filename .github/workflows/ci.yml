@@ -316,100 +316,42 @@ jobs:
                       ${{ env.IMAGE_NAME }}:latest
                       ${{ env.IMAGE_NAME }}:${{ github.run_number }}
 
-    blueprint-sync:
+    # Add this new job after build-test (order doesn't matter as long as it runs on main)
+    sync-blueprint:
         name: Sync render.yaml (Blueprint deploy)
-        needs: [build-test, integration]
-        if: ${{ github.ref == 'refs/heads/main' && needs.build-test.result == 'success' && (needs.integration.result == 'success' || needs.integration.result == 'skipped') }}
         runs-on: ubuntu-latest
-        env:
-            # Required secret: create RENDER_API_KEY in GitHub Secrets (Render Dashboard → Account → API Keys)
-            RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-            # Use this repo URL for the blueprint
-            RENDER_REPO_URL: https://github.com/${{ github.repository }}
-            # Branch to deploy the blueprint from
-            RENDER_BRANCH: main
+        needs: build-test
+        if: github.ref == 'refs/heads/main'
         steps:
-            - name: Checkout
+            - name: Checkout (full history so diff works)
               uses: actions/checkout@v4
-
-            - name: Ensure jq is available
-              run: sudo apt-get update && sudo apt-get install -y jq
+              with:
+                  fetch-depth: 0
 
             - name: Check if render.yaml changed
-              id: check
+              id: changed
               shell: bash
               run: |
                   set -e
-
-                  # Ensure we have at least the previous commit locally (in case fetch-depth != 0 somewhere)
-                  BEFORE="${{ github.event.before }}"
-                  if [[ -n "$BEFORE" ]]; then
-                    git cat-file -e "${BEFORE}^{commit}" 2>/dev/null || git fetch --no-tags origin "${BEFORE}" --depth=1 || true
+                  BASE_SHA="${{ github.event.before }}"
+                  # If GitHub didn't give us a valid base, force a deploy (first run, squash, etc.)
+                  if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+                    echo "BASE not found; forcing Blueprint deploy"
+                    echo "changed=true" >> "$GITHUB_OUTPUT"
+                    exit 0
                   fi
-
-                  # Determine a usable "before" ref
-                  if [[ -z "$BEFORE" ]] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
-                    # Fallback: previous commit on this ref
-                    BEFORE="$(git rev-parse HEAD^ 2>/dev/null || echo '')"
-                  fi
-
-                  if [[ -n "$BEFORE" ]]; then
-                    echo "Diffing against $BEFORE"
-                    CHANGED="$(git diff --name-only "$BEFORE" HEAD | grep -E '^render\.yaml$' || true)"
-                  else
-                    # First commit on the branch or no parent available: just check if file exists in HEAD
-                    echo "No 'before' commit available; checking presence in HEAD"
-                    CHANGED="$(git ls-tree --name-only HEAD | grep -E '^render\.yaml$' || true)"
-                  fi
-
-                  if [[ -n "$CHANGED" ]]; then
-                    echo "render.yaml changed."
+                  if git diff --name-only "$BASE_SHA" "${{ github.sha }}" | grep -E '^render\.ya?ml$' >/dev/null; then
+                    echo "render.yaml changed"
                     echo "changed=true" >> "$GITHUB_OUTPUT"
                   else
-                    echo "render.yaml NOT changed."
+                    echo "render.yaml NOT changed"
                     echo "changed=false" >> "$GITHUB_OUTPUT"
                   fi
-
-            - name: Trigger Blueprint deploy
-              id: trigger
-              if: steps.check.outputs.changed == 'true'
-              shell: bash
-              run: |
-                  set -e
-                  RESP="$(curl -fsSL -X POST "https://api.render.com/v1/blueprints/deploys" \
-                    -H "Authorization: Bearer ${RENDER_API_KEY}" \
-                    -H "Content-Type: application/json" \
-                    -d "{\"repo\":\"${RENDER_REPO_URL}\",\"branch\":\"${RENDER_BRANCH}\",\"clearCache\":false}")"
-                  echo "$RESP" | jq .
-                  DEPLOY_ID="$(echo "$RESP" | jq -r '.id')"
-                  if [[ -z "$DEPLOY_ID" || "$DEPLOY_ID" == "null" ]]; then
-                    echo "Failed to create Blueprint deploy"; exit 1
-                  fi
-                  echo "id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
-
-            - name: Wait for Blueprint to finish
-              if: steps.check.outputs.changed == 'true'
-              shell: bash
-              env:
-                  DEPLOY_ID: ${{ steps.trigger.outputs.id }}
-              run: |
-                  set -e
-                  for i in {1..60}; do
-                    STATUS="$(curl -fsSL "https://api.render.com/v1/blueprints/deploys/${DEPLOY_ID}" \
-                      -H "Authorization: Bearer ${RENDER_API_KEY}" | jq -r '.status')"
-                    echo "Blueprint status: $STATUS"
-                    case "$STATUS" in
-                      live) exit 0 ;;
-                      failed|canceled) echo "Blueprint $STATUS"; exit 1 ;;
-                    esac
-                    sleep 10
-                  done
-                  echo "Timed out waiting for Blueprint deploy"; exit 1
 
     deploy:
         name: Trigger Render deploy via API
         runs-on: ubuntu-latest
-        needs: [build-test, integration, blueprint-sync]
+        needs: [build-test, integration, sync-blueprint]
         if: ${{ github.ref == 'refs/heads/main' && needs.build-test.result == 'success' && (needs.integration.result == 'success' || needs.integration.result == 'skipped') && needs.blueprint-sync.result == 'success' }}
         steps:
             - name: Trigger deploy
