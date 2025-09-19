@@ -48,7 +48,7 @@ services:
 
           # JWT
           - key: JwtSettings__Secret
-            sync: false
+            value: "randomstring"
           - key: JwtSettings__Issuer
             value: ctcare
           - key: JwtSettings__Audience
