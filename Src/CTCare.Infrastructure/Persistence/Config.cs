@@ -245,6 +245,17 @@ namespace CTCare.Infrastructure.Persistence
         {
             e.ToTable("LeaveRequests");
 
+            e.HasKey(x => x.Id);
+
+            e.Property(x => x.StartDate).IsRequired();
+            e.Property(x => x.EndDate).IsRequired();
+
+            e.Property(x => x.DaysRequested).HasPrecision(5, 2).IsRequired();
+            e.Property(x => x.EmployeeComment).HasMaxLength(1000);
+            e.Property(x => x.ManagerComment).HasMaxLength(1000);
+            
+            e.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
+            
             e.Property(x => x.Status).HasConversion<string>();
 
             e.Property(x => x.Reason).HasMaxLength(2000);
@@ -270,6 +281,42 @@ namespace CTCare.Infrastructure.Persistence
                 .OnDelete(DeleteBehavior.Cascade);
 
             e.HasIndex(x => new { x.EmployeeId, x.Status, x.StartDate });
+            e.HasIndex(x => new { x.ManagerId, x.Status, x.StartDate });
+        }
+    }
+
+    public class LeaveBalanceConfig: IEntityTypeConfiguration<LeaveBalance>
+    {
+        public void Configure(EntityTypeBuilder<LeaveBalance> b)
+        {
+            b.ToTable("LeaveBalances");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.EntitledDays).HasPrecision(5, 2).IsRequired();
+            b.Property(x => x.UsedDays).HasPrecision(5, 2).IsRequired();
+            b.Property(x => x.PendingDays).HasPrecision(5, 2).IsRequired();
+
+            b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
+
+            b.HasOne(x => x.Employee).WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne(x => x.LeaveType).WithMany().HasForeignKey(x => x.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
+
+            b.HasIndex(x => new { x.EmployeeId, x.LeaveTypeId, x.Year }).IsUnique();
+        }
+    }
+
+
+    public class LeaveApprovalEventConfig: IEntityTypeConfiguration<LeaveApprovalEvent>
+    {
+        public void Configure(EntityTypeBuilder<LeaveApprovalEvent> b)
+        {
+            b.ToTable("LeaveApprovalEvents");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Note).HasMaxLength(1000);
+            b.HasOne(x => x.LeaveRequest).WithMany().HasForeignKey(x => x.LeaveRequestId).OnDelete(DeleteBehavior.Cascade);
+
+            b.HasIndex(x => new { x.LeaveRequestId, x.CreatedAt });
         }
     }
 

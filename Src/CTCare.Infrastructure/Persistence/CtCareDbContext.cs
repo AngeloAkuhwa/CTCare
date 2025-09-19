@@ -24,6 +24,9 @@ public class CtCareDbContext(DbContextOptions<CtCareDbContext> opt): DbContext(o
     public DbSet<User> UserAccounts => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<LeaveBalance> LeaveBalances => Set<LeaveBalance>();
+    public DbSet<LeaveApprovalEvent> LeaveApprovalEvents => Set<LeaveApprovalEvent>();
+
 
     protected override void OnModelCreating(ModelBuilder b)
     {
