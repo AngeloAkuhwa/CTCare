@@ -82,10 +82,29 @@ services:
           - key: AppSettings__UIBaseUrl
             value: https://ct-care.vercel.app/
           - key: AppSettings__SupportFromAddress
-            value:
-                angeloakuhway@gmail.com
+            value: angeloakuhway@gmail.com
 
-                # ===== Email (SMTP)
+            # Auth 
+          - key: Auth__OtpLength
+            value: "6"
+          - key: Auth__OtpExpiry
+            value: "00:10:00"
+          - key: Auth__MaxFailedAttempts
+            value: "5"
+          - key: Auth__RetryWindow
+            value: "00:10:00"
+          - key: Auth__LockoutDuration
+            value: "00:10:00"
+          - key: Auth__PasswordResetTokenExpiryMinutes
+            value: "00:15:00"
+          - key: Auth__RefreshTokenValidityDays
+            value: "7"
+          - key: Auth__EmailConfirmTokenExpiry
+            value: "1.00:00:00"
+          - key: Auth__EmailConfirmResendCooldown
+            value: "00:10:00"
+
+            # Email (SMTP)
           - key: EmailSettings__Provider
             value: smtp
           - key: EmailSettings__SmtpHost

@@ -92,6 +92,17 @@ env:
     # Sentry
     Sentry__Dsn: ${{ secrets.SENTRY_KEY }}
 
+    #Auth
+    Auth__OtpLength: ${{ secrets.Auth__OtpLength }}
+    Auth__OtpExpiry: ${{ secrets.Auth__OtpExpiry }}
+    Auth__MaxFailedAttempts: ${{ secrets.Auth__MaxFailedAttempts }}
+    Auth__RetryWindow: ${{ secrets.Auth__RetryWindow }}
+    Auth__LockoutDuration: ${{ secrets.Auth__LockoutDuration }}
+    Auth__PasswordResetTokenExpiryMinutes: ${{ secrets.Auth__PasswordResetTokenExpiryMinutes }}
+    Auth__RefreshTokenValidityDays: ${{ secrets.Auth__RefreshTokenValidityDays }}
+    Auth__EmailConfirmTokenExpiry: ${{ secrets.Auth__EmailConfirmTokenExpiry }}
+    Auth__EmailConfirmResendCooldown: ${{ secrets.Auth__EmailConfirmResendCooldown }}
+
 # Prevent wasted builds
 concurrency:
     group: net-ci-${{ github.ref }} # One run per branch/PR at a time
