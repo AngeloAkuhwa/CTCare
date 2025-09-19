@@ -92,28 +92,28 @@ env:
     # Sentry
     Sentry__Dsn: ${{ secrets.SENTRY_KEY }}
 
-    #Auth
-    Auth__OtpLength: ${{ secrets.Auth__OtpLength }}
-    Auth__OtpExpiry: ${{ secrets.Auth__OtpExpiry }}
-    Auth__MaxFailedAttempts: ${{ secrets.Auth__MaxFailedAttempts }}
-    Auth__RetryWindow: ${{ secrets.Auth__RetryWindow }}
-    Auth__LockoutDuration: ${{ secrets.Auth__LockoutDuration }}
-    Auth__PasswordResetTokenExpiryMinutes: ${{ secrets.Auth__PasswordResetTokenExpiryMinutes }}
-    Auth__RefreshTokenValidityDays: ${{ secrets.Auth__RefreshTokenValidityDays }}
-    Auth__EmailConfirmTokenExpiry: ${{ secrets.Auth__EmailConfirmTokenExpiry }}
-    Auth__EmailConfirmResendCooldown: ${{ secrets.Auth__EmailConfirmResendCooldown }}
+    # Auth
+    Auth__OtpLength: ${{ secrets.Auth__OtpLength || '6' }}
+    Auth__OtpExpiry: ${{ secrets.Auth__OtpExpiry || '00:10:00' }}
+    Auth__MaxFailedAttempts: ${{ secrets.Auth__MaxFailedAttempts || '5' }}
+    Auth__RetryWindow: ${{ secrets.Auth__RetryWindow || '00:10:00' }}
+    Auth__LockoutDuration: ${{ secrets.Auth__LockoutDuration || '00:10:00' }}
+    Auth__PasswordResetTokenExpiryMinutes: ${{ secrets.Auth__PasswordResetTokenExpiryMinutes || '00:15:00' }}
+    Auth__RefreshTokenValidityDays: ${{ secrets.Auth__RefreshTokenValidityDays || '7' }}
+    Auth__EmailConfirmTokenExpiry: ${{ secrets.Auth__EmailConfirmTokenExpiry || '1.00:00:00' }}
+    Auth__EmailConfirmResendCooldown: ${{ secrets.Auth__EmailConfirmResendCooldown || '00:10:00' }}
 
-    # NEW — AuthLimits (create these repo secrets)
-    AUTHLIMITS__OTPLENGTH__MIN: ${{ secrets.AUTHLIMITS__OTPLENGTH__MIN }}
-    AUTHLIMITS__OTPLENGTH__MAX: ${{ secrets.AUTHLIMITS__OTPLENGTH__MAX }}
-    AUTHLIMITS__OTPEXPIRY__MIN: ${{ secrets.AUTHLIMITS__OTPEXPIRY__MIN }}
-    AUTHLIMITS__OTPEXPIRY__MAX: ${{ secrets.AUTHLIMITS__OTPEXPIRY__MAX }}
-    AUTHLIMITS__MAXFAILEDATTEMPTS__MIN: ${{ secrets.AUTHLIMITS__MAXFAILEDATTEMPTS__MIN }}
-    AUTHLIMITS__MAXFAILEDATTEMPTS__MAX: ${{ secrets.AUTHLIMITS__MAXFAILEDATTEMPTS__MAX }}
-    AUTHLIMITS__RETRYWINDOWMIN: ${{ secrets.AUTHLIMITS__RETRYWINDOWMIN }}
-    AUTHLIMITS__LOCKOUTDURATIONMIN: ${{ secrets.AUTHLIMITS__LOCKOUTDURATIONMIN }}
-    AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN }}
-    AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX }}
+    # AuthLimits
+    AUTHLIMITS__OTPLENGTH__MIN: ${{ secrets.AUTHLIMITS__OTPLENGTH__MIN || '4' }}
+    AUTHLIMITS__OTPLENGTH__MAX: ${{ secrets.AUTHLIMITS__OTPLENGTH__MAX || '8' }}
+    AUTHLIMITS__OTPEXPIRY__MIN: ${{ secrets.AUTHLIMITS__OTPEXPIRY__MIN || '00:01:00' }}
+    AUTHLIMITS__OTPEXPIRY__MAX: ${{ secrets.AUTHLIMITS__OTPEXPIRY__MAX || '00:30:00' }}
+    AUTHLIMITS__MAXFAILEDATTEMPTS__MIN: ${{ secrets.AUTHLIMITS__MAXFAILEDATTEMPTS__MIN || '3' }}
+    AUTHLIMITS__MAXFAILEDATTEMPTS__MAX: ${{ secrets.AUTHLIMITS__MAXFAILEDATTEMPTS__MAX || '10' }}
+    AUTHLIMITS__RETRYWINDOWMIN: ${{ secrets.AUTHLIMITS__RETRYWINDOWMIN || '00:01:00' }}
+    AUTHLIMITS__LOCKOUTDURATIONMIN: ${{ secrets.AUTHLIMITS__LOCKOUTDURATIONMIN || '00:01:00' }}
+    AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN || '1' }}
+    AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX || '90' }}
 
 # Prevent wasted builds
 concurrency:
