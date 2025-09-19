@@ -69,10 +69,10 @@ services:
             value: /api/v1/auth/login
           - key: Api__KeylessPaths__4
             value: /api/v1/auth/forgot-password
-          - key: Api__KeylessPaths__5
-            value: /health
           - key: Api__KeylessPaths__6
             value: /swagger
+          - key: Api__KeylessPaths__5
+            value: /health
 
           # App / UI base URLs
           - key: AppSettings__BaseUrl
