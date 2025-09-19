@@ -76,7 +76,8 @@ try
     var app = builder.Build();
 
     //Middleware pipeline
-    await app.Services.MigrateAsync(app.Environment, seed: app.Environment.IsProduction() ? null : DbSeed.SeedAsync);
+    await app.Services.MigrateAsync(app.Environment, seed : DbSeed.SeedAsync);
+   // await app.Services.MigrateAsync(app.Environment, seed: app.Environment.IsProduction() ? null : DbSeed.SeedAsync);
     app.UseForwardedHeaders();
     app.UseSentryTracing();
     app.UseMiddleware<GlobalExceptionMiddleware>();

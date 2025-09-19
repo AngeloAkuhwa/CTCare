@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CTCare.Infrastructure.Migrations
+namespace CTCare.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CtCareDbContext))]
     partial class CtCareDbContextModelSnapshot : ModelSnapshot

@@ -10,11 +10,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CTCare.Infrastructure.Migrations
+namespace CTCare.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CtCareDbContext))]
-    [Migration("20250917202440_GeneralModelsTables")]
-    partial class GeneralModelsTables
+    [Migration("20250919100150_FullModelUpdate")]
+    partial class FullModelUpdate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

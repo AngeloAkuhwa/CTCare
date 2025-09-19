@@ -44,7 +44,7 @@ public static class DbSeed
                 var dept = await db.Departments.FirstOrDefaultAsync(d => d.Code == code);
                 if (dept is null)
                 {
-                    dept = new Department { Code = code, Name = name, Description = desc };
+                    dept = new Department { Id = SequentialGuid.NewGuid(), Code = code, Name = name, Description = desc };
                     db.Departments.Add(dept);
                     logger.LogInformation("Seed: Department {Code} created.", code);
                 }
@@ -113,6 +113,7 @@ public static class DbSeed
                     {
                         existing = new Team
                         {
+                            Id = SequentialGuid.NewGuid(),
                             DepartmentId = dept.Id,
                             Code = code,
                             Name = name,
@@ -153,6 +154,7 @@ public static class DbSeed
                 {
                     db.LeaveTypes.Add(new LeaveType
                     {
+                        Id = SequentialGuid.NewGuid(),
                         Name = name,
                         IsPaid = paid,
                         MaxDaysPerYear = max,
@@ -218,6 +220,7 @@ public static class DbSeed
             {
                 manager = new Employee
                 {
+                    Id = SequentialGuid.NewGuid(),
                     EmployeeCode = await NextEmployeeCodeAsync(db),
                     Status = EmploymentStatus.Active,
                     EmployeeType = EmployeeType.FullTime,
@@ -245,6 +248,7 @@ public static class DbSeed
             {
                 dev = new Employee
                 {
+                    Id = SequentialGuid.NewGuid(),
                     EmployeeCode = await NextEmployeeCodeAsync(db),
                     Status = EmploymentStatus.Active,
                     EmployeeType = EmployeeType.FullTime,
@@ -274,6 +278,7 @@ public static class DbSeed
             {
                 var user = new User
                 {
+                    Id = SequentialGuid.NewGuid(),
                     Email = managerEmail,
                     EmailConfirmed = true,
                     PasswordHash = hash,
@@ -291,6 +296,7 @@ public static class DbSeed
             {
                 var user = new User
                 {
+                    Id = SequentialGuid.NewGuid(),
                     Email = devEmail,
                     EmailConfirmed = true,
                     PasswordHash = hash,
@@ -314,6 +320,7 @@ public static class DbSeed
 
                 db.ApiKeys.Add(new ApiKey
                 {
+                    Id = SequentialGuid.NewGuid(),
                     Name = string.IsNullOrWhiteSpace(configuredFirstKey) ? "Local Dev Key" : "Configured Key",
                     Prefix = ApiKeyUtilities.GetPrefix(rawKey),
                     Hash = ApiKeyUtilities.Hash(rawKey),
@@ -333,6 +340,7 @@ public static class DbSeed
             {
                 db.LeavePolicies.Add(new LeavePolicy
                 {
+                    Id = SequentialGuid.NewGuid(),
                     LeaveTypeId = sick.Id,
                     MaxDaysPerYear = 12m,
                     RequiresManagerApproval = true,

@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace CTCare.Infrastructure.Migrations
+namespace CTCare.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class GeneralModelsTables : Migration
+    public partial class FullModelRecereate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
