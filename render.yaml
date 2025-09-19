@@ -31,8 +31,6 @@ services:
                 name: ctcare-redis
                 type: redis
                 property: connectionString
-          - key: RedisSetting__ConnectionString
-            value: red-<id>:6379
           - key: RedisSetting__Password
             value: <internal-auth-token>
           - key: RedisSetting__SlidingExpiration
@@ -48,12 +46,114 @@ services:
           - key: RedisSetting__AbortOnConnectFail
             value: "false"
 
+          # JWT
+          - key: JwtSettings__Secret
+            sync: false
+          - key: JwtSettings__Issuer
+            value: ctcare
+          - key: JwtSettings__Audience
+            value: ctcare-clients
+          - key: JwtSettings__ExpiryMinutes
+            value: "60"
+          - key: JwtSettings__RandomNumberGeneratorCount
+            value: "32"
+
+          # Whitelist public/anon endpoints so email links & auth flows work without X-Api-Key
+          - key: Api__KeylessPaths__0
+            value: /api/v1/auth/confirm-email
+          - key: Api__KeylessPaths__1
+            value: /api/v1/auth/reset-password
+          - key: Api__KeylessPaths__2
+            value: /api/v1/auth/register
+          - key: Api__KeylessPaths__3
+            value: /api/v1/auth/login
+          - key: Api__KeylessPaths__4
+            value: /api/v1/auth/forgot-password
+          - key: Api__KeylessPaths__5
+            value: /health
+          - key: Api__KeylessPaths__6
+            value: /swagger
+
+          # App / UI base URLs
+          - key: AppSettings__BaseUrl
+            value: https://ctcare-api.onrender.com/api/v1/
+
+          # UIBaseUrl is your frontend (used for redirects in email link handlers)
+          - key: AppSettings__UIBaseUrl
+            value: https://ct-care.vercel.app/
+          - key: AppSettings__SupportFromAddress
+            value: angeloakuhway@gmail.com
+
+            # Auth
+          - key: Auth__OtpLength
+            value: "6"
+          - key: Auth__OtpExpiry
+            value: "00:10:00"
+          - key: Auth__MaxFailedAttempts
+            value: "5"
+          - key: Auth__RetryWindow
+            value: "00:10:00"
+          - key: Auth__LockoutDuration
+            value: "00:10:00"
+          - key: Auth__PasswordResetTokenExpiryMinutes
+            value: "00:15:00"
+          - key: Auth__RefreshTokenValidityDays
+            value: "7"
+          - key: Auth__EmailConfirmTokenExpiry
+            value: "1.00:00:00"
+          - key: Auth__EmailConfirmResendCooldown
+            value: "00:10:00"
+
+            # AuthLimits
+          - key: AuthLimits__OtpLength__Min
+            value: "4"
+          - key: AuthLimits__OtpLength__Max
+            value: "8"
+          - key: AuthLimits__OtpExpiry__Min
+            value: "00:01:00"
+          - key: AuthLimits__OtpExpiry__Max
+            value: "00:30:00"
+          - key: AuthLimits__MaxFailedAttempts__Min
+            value: "3"
+          - key: AuthLimits__MaxFailedAttempts__Max
+            value: "10"
+          - key: AuthLimits__RetryWindowMin
+            value: "00:01:00"
+          - key: AuthLimits__LockoutDurationMin
+            value: "00:01:00"
+          - key: AuthLimits__RefreshTokenValidityDays__Min
+            value: "1"
+          - key: AuthLimits__RefreshTokenValidityDays__Max
+            value: "90"
+
+            # Email (SMTP)
+          - key: EmailSettings__Provider
+            value: smtp
+          - key: EmailSettings__SmtpHost
+            value: smtp.gmail.com
+          - key: EmailSettings__SmtpPort
+            value: "587"
+          - key: EmailSettings__Username
+            sync: false
+          - key: EmailSettings__Password
+            sync: false
+          - key: EmailSettings__FromAddress
+            value: angeloakuhwa@gmail.com
+          - key: EmailSettings__FromName
+            value: CTCare
+          - key: EmailSettings__RetryCount
+            value: "3"
+          - key: EmailSettings__RetryDelayMs
+            value: "200"
+          - key: EmailSettings__SslMode
+            value: StartTls
+
           - key: Sentry__Dsn
             sync: false
           - key: SentryKey
             sync: false
 
-          - key: Auth__ApiKeys__0
+          - key: Api__keys__0
             sync: false
 
           - key: RateLimiting__RequestsPerMinute
@@ -61,7 +161,7 @@ services:
           - key: RateLimiting__Burst
             value: "20"
 
-    # --- Redis cache (managed) ---
+    # --- Redis cache ---
     - type: redis
       name: ctcare-redis
       plan: free

@@ -52,6 +52,46 @@ services:
             Auth__ApiKeys__0: ${API_KEY}
             RateLimiting__RequestsPerMinute: ${RATE_LIMIT_REQUESTS_PER_MINUTE}
             RateLimiting__Burst: ${RATE_LIMIT_BURST}
+
+            # Auth
+            Auth__OtpLength: ${Auth__OtpLength:-6}
+            Auth__OtpExpiry: ${Auth__OtpExpiry:-00:10:00}
+            Auth__MaxFailedAttempts: ${Auth__MaxFailedAttempts:-5}
+            Auth__RetryWindow: ${Auth__RetryWindow:-00:10:00}
+            Auth__LockoutDuration: ${Auth__LockoutDuration:-00:10:00}
+            Auth__PasswordResetTokenExpiryMinutes: ${Auth__PasswordResetTokenExpiryMinutes:-00:15:00}
+            Auth__RefreshTokenValidityDays: ${Auth__RefreshTokenValidityDays:-7}
+            Auth__EmailConfirmTokenExpiry: ${Auth__EmailConfirmTokenExpiry:-1.00:00:00}
+            Auth__EmailConfirmResendCooldown: ${Auth__EmailConfirmResendCooldown:-00:10:00}
+
+            # AuthLimits
+            AuthLimits__OtpLength__Min: ${AuthLimits__OtpLength__Min:-4}
+            AuthLimits__OtpLength__Max: ${AuthLimits__OtpLength__Max:-8}
+            AuthLimits__OtpExpiry__Min: ${AuthLimits__OtpExpiry__Min:-00:01:00}
+            AuthLimits__OtpExpiry__Max: ${AuthLimits__OtpExpiry__Max:-00:30:00}
+            AuthLimits__MaxFailedAttempts__Min: ${AuthLimits__MaxFailedAttempts__Min:-3}
+            AuthLimits__MaxFailedAttempts__Max: ${AuthLimits__MaxFailedAttempts__Max:-10}
+            AuthLimits__RetryWindowMin: ${AuthLimits__RetryWindowMin:-00:01:00}
+            AuthLimits__LockoutDurationMin: ${AuthLimits__LockoutDurationMin:-00:01:00}
+            AuthLimits__RefreshTokenValidityDays__Min: ${AuthLimits__RefreshTokenValidityDays__Min:-1}
+            AuthLimits__RefreshTokenValidityDays__Max: ${AuthLimits__RefreshTokenValidityDays__Max:-90}
+
+            JwtSettings__Secret: ${JwtSettings__Secret}
+            JwtSettings__Issuer: ${JwtSettings__Issuer:-ctcare}
+            JwtSettings__Audience: ${JwtSettings__Audience:-ctcare-clients}
+
+            AppSettings__BaseUrl: ${AppSettings__BaseUrl:-http://localhost:${API_PORT:-8080}/api/v1}
+            AppSettings__UIBaseUrl: ${AppSettings__UIBaseUrl:-https://ct-care.vercel.app/}
+            AppSettings__SupportFromAddress: ${AppSettings__SupportFromAddress:-angeloakuhwa@gmail.com}
+
+            Api__Keys__0: ${API_KEY:-local-dev-key-123}
+            Api__KeylessPaths__0: /api/v1/auth/confirm-email
+            Api__KeylessPaths__1: /api/v1/auth/reset-password
+            Api__KeylessPaths__2: /api/v1/auth/register
+            Api__KeylessPaths__3: /api/v1/auth/login
+            Api__KeylessPaths__4: /api/v1/auth/forgot-password
+            Api__KeylessPaths__5: /health
+            Api__KeylessPaths__6: /swagger
         ports:
             - "${API_PORT}:8080"
 

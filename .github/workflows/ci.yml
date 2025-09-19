@@ -1,6 +1,5 @@
 name: .NET CI
 
-# --- Triggers ---------------------------------------------------------------
 on:
     push:
         branches: [main] # Run on direct pushes to main
@@ -36,11 +35,87 @@ env:
     DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
     REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
 
-    # Feature toggles
-    RUN_COMPOSE: ${{ vars.RUN_COMPOSE }} # set to 'true' to require integration
-    ENABLE_DOCKER: ${{ vars.ENABLE_DOCKER }} # build & push to GHCR if you need images
+    RUN_COMPOSE: ${{ vars.RUN_COMPOSE }}
+    ENABLE_DOCKER: ${{ vars.ENABLE_DOCKER }}
 
-# --- Prevent wasted builds --------------------------------------------------
+    # ASP.NET Core binding keys (new)
+    ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
+
+    # Redis
+    RedisSetting__ConnectionString: ${{ secrets.REDIS_CONNECTION_STRING }}
+    RedisSetting__Password: ${{ secrets.REDIS_PASSWORD }}
+    RedisSetting__SlidingExpiration: ${{ secrets.RedisSetting__SlidingExpiration }}
+    RedisSetting__AbsoluteExpiration: ${{ secrets.RedisSetting__AbsoluteExpiration }}
+    RedisSetting__SyncTimeOut: ${{ secrets.RedisSetting__SyncTimeOut }}
+    RedisSetting__ConnectTimeout: ${{ secrets.RedisSetting__ConnectTimeout }}
+    RedisSetting__ConnectRetry: ${{ secrets.RedisSetting__ConnectRetry }}
+    RedisSetting__AbortOnConnectFail: ${{ secrets.RedisSetting__AbortOnConnectFail }}
+
+    # App / UI base URLs used in email redirects
+    AppSettings__BaseUrl: ${{ secrets.AppSettings__BaseUrl }}
+    AppSettings__UIBaseUrl: ${{ secrets.AppSettings__UIBaseUrl }}
+    AppSettings__SupportFromAddress: ${{ secrets.AppSettings__SupportFromAddress }}
+
+    # JWT
+    JwtSettings__Secret: ${{ secrets.JwtSettings__Secret }}
+    JwtSettings__Issuer: ${{ secrets.JwtSettings__Issuer }}
+    JwtSettings__Audience: ${{ secrets.JwtSettings__Audience }}
+    JwtSettings__ExpiryMinutes: ${{ secrets.JwtSettings__ExpiryMinutes }}
+    JwtSettings__RandomNumberGeneratorCount: ${{ secrets.JwtSettings__RandomNumberGeneratorCount }}
+
+    # API key gate
+    Api__Keys__0: ${{ secrets.API_KEY }}
+    Api__KeylessPaths__0: ${{ secrets.Api__KeylessPaths__0 }}
+    Api__KeylessPaths__1: ${{ secrets.Api__KeylessPaths__1 }}
+    Api__KeylessPaths__2: ${{ secrets.Api__KeylessPaths__2 }}
+    Api__KeylessPaths__3: ${{ secrets.Api__KeylessPaths__3 }}
+    Api__KeylessPaths__4: ${{ secrets.Api__KeylessPaths__4 }}
+    Api__KeylessPaths__5: ${{ secrets.Api__KeylessPaths__5 }}
+    Api__KeylessPaths__6: ${{ secrets.Api__KeylessPaths__6 }}
+
+    # Email
+    EmailSettings__Provider: ${{ secrets.EmailSettings__Provider }}
+    EmailSettings__SmtpHost: ${{ secrets.EmailSettings__SmtpHost }}
+    EmailSettings__SmtpPort: ${{ secrets.EmailSettings__SmtpPort }}
+    EmailSettings__Username: ${{ secrets.EmailSettings__Username }}
+    EmailSettings__Password: ${{ secrets.EmailSettings__Password }}
+    EmailSettings__FromAddress: ${{ secrets.EmailSettings__FromAddress }}
+    EmailSettings__FromName: ${{ secrets.EmailSettings__FromName }}
+    EmailSettings__RetryCount: ${{ secrets.EmailSettings__RetryCount }}
+    EmailSettings__RetryDelayMs: ${{ secrets.EmailSettings__RetryDelayMs }}
+    EmailSettings__SslMode: ${{ secrets.EmailSettings__SslMode }}
+
+    # Rate limiting
+    RateLimiting__RequestsPerMinute: ${{ secrets.RATE_LIMIT_REQUESTS_PER_MINUTE }}
+    RateLimiting__Burst: ${{ secrets.RATE_LIMIT_BURST }}
+
+    # Sentry
+    Sentry__Dsn: ${{ secrets.SENTRY_KEY }}
+
+    # Auth
+    Auth__OtpLength: ${{ secrets.Auth__OtpLength || '6' }}
+    Auth__OtpExpiry: ${{ secrets.Auth__OtpExpiry || '00:10:00' }}
+    Auth__MaxFailedAttempts: ${{ secrets.Auth__MaxFailedAttempts || '5' }}
+    Auth__RetryWindow: ${{ secrets.Auth__RetryWindow || '00:10:00' }}
+    Auth__LockoutDuration: ${{ secrets.Auth__LockoutDuration || '00:10:00' }}
+    Auth__PasswordResetTokenExpiryMinutes: ${{ secrets.Auth__PasswordResetTokenExpiryMinutes || '00:15:00' }}
+    Auth__RefreshTokenValidityDays: ${{ secrets.Auth__RefreshTokenValidityDays || '7' }}
+    Auth__EmailConfirmTokenExpiry: ${{ secrets.Auth__EmailConfirmTokenExpiry || '1.00:00:00' }}
+    Auth__EmailConfirmResendCooldown: ${{ secrets.Auth__EmailConfirmResendCooldown || '00:10:00' }}
+
+    # AuthLimits
+    AUTHLIMITS__OTPLENGTH__MIN: ${{ secrets.AUTHLIMITS__OTPLENGTH__MIN || '4' }}
+    AUTHLIMITS__OTPLENGTH__MAX: ${{ secrets.AUTHLIMITS__OTPLENGTH__MAX || '8' }}
+    AUTHLIMITS__OTPEXPIRY__MIN: ${{ secrets.AUTHLIMITS__OTPEXPIRY__MIN || '00:01:00' }}
+    AUTHLIMITS__OTPEXPIRY__MAX: ${{ secrets.AUTHLIMITS__OTPEXPIRY__MAX || '00:30:00' }}
+    AUTHLIMITS__MAXFAILEDATTEMPTS__MIN: ${{ secrets.AUTHLIMITS__MAXFAILEDATTEMPTS__MIN || '3' }}
+    AUTHLIMITS__MAXFAILEDATTEMPTS__MAX: ${{ secrets.AUTHLIMITS__MAXFAILEDATTEMPTS__MAX || '10' }}
+    AUTHLIMITS__RETRYWINDOWMIN: ${{ secrets.AUTHLIMITS__RETRYWINDOWMIN || '00:01:00' }}
+    AUTHLIMITS__LOCKOUTDURATIONMIN: ${{ secrets.AUTHLIMITS__LOCKOUTDURATIONMIN || '00:01:00' }}
+    AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN || '1' }}
+    AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX || '90' }}
+
+# Prevent wasted builds
 concurrency:
     group: net-ci-${{ github.ref }} # One run per branch/PR at a time
     cancel-in-progress: true # Auto-cancel older in-flight runs
@@ -51,7 +126,6 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            # 1) Get the source
             - name: Checkout repository
               uses: actions/checkout@v4
 
@@ -66,7 +140,7 @@ jobs:
                       **/*.props
                       **/*.targets
 
-            # (Optional) Extra NuGet cache for non-standard layouts
+            # Extra NuGet cache for non-standard layouts
             - name: Cache NuGet packages (fallback)
               uses: actions/cache@v3
               with:
@@ -75,19 +149,15 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-nuget-
 
-            # 3) Restore all projects
+            # Restore all projects
             - name: Restore dependencies
               run: dotnet restore CTCare.sln
 
-            # 4) Enforce code style (fails if formatting is required)
-            # - name: Verify formatting
-            #   run: dotnet format CTCare.sln --verify-no-changes
-
-            # 5) Build (Release)
+            # Build (Release)
             - name: Build solution
               run: dotnet build CTCare.sln --no-restore -c Release
 
-            # 6) Test with coverage (Cobertura plays nice with most tools, inc. Codecov)
+            # Test with coverage (Cobertura plays nice with most tools, inc. Codecov)
             - name: Run tests with code coverage
               run: >
                   dotnet test CTCare.sln -c Release --no-build
@@ -96,7 +166,7 @@ jobs:
                   /p:CoverletOutputFormat=cobertura
                   /p:CoverletOutput=./TestResults/coverage/
 
-            # 7) Upload test results (always upload, even if tests fail)
+            # Upload test results (always upload, even if tests fail)
             - name: Upload test result files
               if: ${{ always() && github.actor != 'nektos/act' }} # Skip when running with act ocally to test CI
               uses: actions/upload-artifact@v4
@@ -104,7 +174,7 @@ jobs:
                   name: test-results
                   path: "**/TestResults/**/*.trx"
 
-            # 8) Upload coverage artifacts (Cobertura XML)
+            # Upload coverage artifacts (Cobertura XML)
             - name: Upload coverage artifact
               if: ${{ always() && github.actor != 'nektos/act' }} # Skip when running with act ocally to test CI
               uses: actions/upload-artifact@v4
@@ -112,11 +182,11 @@ jobs:
                   name: coverage-cobertura
                   path: "**/TestResults/coverage/**/*.xml"
 
-            # 9) Quick dependency security audit (does not fail the build)
+            # Quick dependency security audit (does not fail the build)
             - name: Vulnerability report
               run: dotnet list CTCare.sln package --vulnerable || true
 
-            # 10) Publish API (useful for deployments/manual testing)
+            # Publish API (useful for deployments/manual testing)
             - name: Publish CTCare.Api
               run: dotnet publish Src/CTCare.Api/CTCare.Api.csproj -c Release -o ./artifacts/api
 
@@ -127,7 +197,7 @@ jobs:
                   name: CTCare-api
                   path: artifacts/api
 
-            # 11) Upload coverage to Codecov (optional: needs CODECOV_TOKEN for private repos)
+            # Upload coverage to Codecov (optional: needs CODECOV_TOKEN for private repos)
             - name: Upload coverage to Codecov
               if: ${{ always() && github.actor != 'nektos/act' }} # Skip when running with act ocally to test CI
               uses: codecov/codecov-action@v4
@@ -249,7 +319,7 @@ jobs:
     deploy:
         name: Trigger Render deploy via API
         runs-on: ubuntu-latest
-        needs: [build-test, integration] # <- require BOTH jobs to finish successfully
+        needs: [build-test, integration]
         if: ${{ github.ref == 'refs/heads/main' && needs.build-test.result == 'success' && needs.integration.result == 'success' }}
         steps:
             - name: Trigger deploy

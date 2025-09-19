@@ -1,47 +1,43 @@
+using System.Text.RegularExpressions;
+
 using CTCare.Application.Interfaces;
 using CTCare.Shared.Settings;
 
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using StackExchange.Redis;
 
 namespace CTCare.Application.Services;
+
 /// <summary>
-/// Redis-based cache implementation with TTL and tagging support.
+/// Redis-based cache with TTL and tagging, aligned with IDistributedCache instance prefix,
+/// robust key normalization, and tag lifecycle helpers.
 /// </summary>
-public class CacheService: ICacheService
+public class CacheService(
+    IDistributedCache cache,
+    IConnectionMultiplexer redis,
+    IOptions<RedisSetting> redisOptions,
+    IOptions<RedisCacheOptions> redisCacheOptions,
+    ILogger<CacheService> logger)
+    : ICacheService
 {
-    private readonly IDistributedCache _cache;
-    private readonly IDatabase _db;
-    private readonly ILogger<CacheService> _logger;
-    private readonly RedisSetting _settings;
+    private readonly IDistributedCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+    private readonly IDatabase _db = (redis ?? throw new ArgumentNullException(nameof(redis))).GetDatabase();
+    private readonly ILogger<CacheService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly RedisSetting _settings = (redisOptions ?? throw new ArgumentNullException(nameof(redisOptions))).Value;
 
-    public CacheService(
-        IDistributedCache cache,
-        IConnectionMultiplexer redis,
-        IOptions<RedisSetting> redisOptions,
-        ILogger<CacheService> logger)
-    {
-        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+    // This must match how AddStackExchangeRedisCache was configured (InstanceName).
+    private readonly string _instancePrefix = (redisCacheOptions?.Value?.InstanceName ?? string.Empty);
 
-        if (redis == null)
-        {
-            throw new ArgumentNullException(nameof(redis));
-        }
+    private static readonly Regex BadKeyChars = new(@"[\s\r\n\t]+", RegexOptions.Compiled);
 
-        _db = redis.GetDatabase();
-        _settings = redisOptions?.Value ?? throw new ArgumentNullException(nameof(redisOptions));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
 
     public async Task<string?> GetAsync(string key, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            throw new ArgumentException("Cache key cannot be empty.", nameof(key));
-        }
+        key = NormalizeKey(key);
 
         try
         {
@@ -61,15 +57,8 @@ public class CacheService: ICacheService
         TimeSpan? slidingExpiry = null,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            throw new ArgumentException("Cache key cannot be empty.", nameof(key));
-        }
-
-        if (value == null)
-        {
-            throw new ArgumentNullException(nameof(value));
-        }
+        key = NormalizeKey(key);
+        ArgumentNullException.ThrowIfNull(value);
 
         var options = new DistributedCacheEntryOptions
         {
@@ -87,12 +76,64 @@ public class CacheService: ICacheService
         }
     }
 
+    /// <summary>
+    /// Atomically set a value and register one or more tags.
+    /// The tag set TTL is extended up to the value's absolute TTL to avoid orphan tag sets.
+    /// </summary>
+    public async Task SetAsync(
+        string key,
+        string value,
+        TimeSpan absoluteExpiry,
+        IEnumerable<string>? tags,
+        TimeSpan? slidingExpiry = null,
+        CancellationToken cancellationToken = default)
+    {
+        key = NormalizeKey(key);
+        ArgumentNullException.ThrowIfNull(value);
+
+        var options = new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = absoluteExpiry,
+            SlidingExpiration = slidingExpiry ?? _settings.SlidingExpiration
+        };
+
+        try
+        {
+            await _cache.SetStringAsync(key, value, options, cancellationToken);
+
+            if (tags is not null)
+            {
+                var tasks = new List<Task>();
+                foreach (var tag in tags)
+                {
+                    if (string.IsNullOrWhiteSpace(tag))
+                    {
+                        continue;
+                    }
+
+                    var setKey = TagSetKey(tag);
+                    tasks.Add(_db.SetAddAsync(setKey, key));
+
+                    // Extend tag-set TTL to at least value TTL (prevents endless growth of tag sets)
+                    tasks.Add(ExtendKeyTtlIfShorterAsync(setKey, absoluteExpiry));
+                }
+                await Task.WhenAll(tasks);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting cache key {Key} with tags.", key);
+        }
+    }
+
     public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(key))
         {
             return;
         }
+
+        key = NormalizeKey(key);
 
         try
         {
@@ -111,10 +152,12 @@ public class CacheService: ICacheService
             return;
         }
 
-        var tagSet = ApplyTagKey(tag);
+        key = NormalizeKey(key);
+        var setKey = TagSetKey(tag);
+
         try
         {
-            await _db.SetAddAsync(tagSet, key);
+            await _db.SetAddAsync(setKey, key);
         }
         catch (Exception ex)
         {
@@ -129,15 +172,27 @@ public class CacheService: ICacheService
             return;
         }
 
-        var tagSet = ApplyTagKey(tag);
+        var setKey = TagSetKey(tag);
+
         try
         {
-            var members = await _db.SetMembersAsync(tagSet).ConfigureAwait(false);
-            foreach (var member in members)
+            var members = await _db.SetMembersAsync(setKey).ConfigureAwait(false);
+            if (members.Length == 0)
             {
-                await RemoveAsync(member, cancellationToken);
+                await _db.KeyDeleteAsync(setKey).ConfigureAwait(false);
+                return;
             }
-            await _db.KeyDeleteAsync(tagSet).ConfigureAwait(false);
+
+            // Remove through IDistributedCache so provider prefix is respected
+            var removals = members
+                .Select(m => m.HasValue ? m.ToString() : null)
+                .Where(static s => !string.IsNullOrWhiteSpace(s))!
+                .Select(s => _cache.RemoveAsync(s!, cancellationToken));
+
+            await Task.WhenAll(removals);
+
+            // Finally, drop the tag set itself
+            await _db.KeyDeleteAsync(setKey).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -147,14 +202,12 @@ public class CacheService: ICacheService
 
     public async Task<TimeSpan?> GetTimeToLiveAsync(string key, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            throw new ArgumentException(nameof(key));
-        }
-
+        key = NormalizeKey(key);
         try
         {
-            var ttl = await _db.KeyTimeToLiveAsync(key).ConfigureAwait(false);
+            // IMPORTANT: query TTL for the PHYSICAL key (incl. provider InstanceName)
+            var physicalKey = PhysicalKey(key);
+            var ttl = await _db.KeyTimeToLiveAsync(physicalKey).ConfigureAwait(false);
             return ttl;
         }
         catch (Exception ex)
@@ -164,5 +217,39 @@ public class CacheService: ICacheService
         }
     }
 
-    private static string ApplyTagKey(string tag) => $"tag:{tag}";
+
+    private string TagSetKey(string tag)
+    {
+        var normalized = NormalizeKey(tag);
+        return $"{_instancePrefix}tag:{normalized}";
+    }
+
+    private string PhysicalKey(string logicalKey)
+    {
+        // StackExchangeRedisCache prepends InstanceName to logical keys
+        // so TTL queries must include that prefix to hit the same Redis key.
+        return $"{_instancePrefix}{logicalKey}";
+    }
+
+    private static string NormalizeKey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new ArgumentException("Cache key cannot be empty.", nameof(key));
+        }
+
+        var k = key.Trim();
+        k = BadKeyChars.Replace(k, " ");
+        return k.ToLowerInvariant();
+    }
+
+    private async Task ExtendKeyTtlIfShorterAsync(RedisKey key, TimeSpan desiredTtl)
+    {
+        // If no TTL, set; if TTL shorter, extend; else leave as-is
+        var current = await _db.KeyTimeToLiveAsync(key).ConfigureAwait(false);
+        if (current is null || current < desiredTtl)
+        {
+            await _db.KeyExpireAsync(key, desiredTtl).ConfigureAwait(false);
+        }
+    }
 }
