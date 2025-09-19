@@ -147,6 +147,10 @@ services:
             value: "200"
           - key: EmailSettings__SslMode
             value: StartTls
+          - key: EmailSettings__Password
+            value: "Password"
+          - key: EmailSettings__UserName
+            value: "UserName"
           - key: ASPNETCORE_URLS
             value: http://0.0.0.0:${PORT}
           - key: PORT
