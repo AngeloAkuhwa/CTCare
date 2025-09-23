@@ -168,6 +168,19 @@ services:
             value: "60"
           - key: RateLimiting__Burst
             value: "20"
+          #Cors
+          - key: Cors__PolicyName
+            value: AppCors
+          - key: Cors__AllowedOrigins__0
+            value: http://localhost:3000
+          - key: Cors__AllowedOrigins__1
+            value: http://localhost:3001
+          - key: Cors__AllowedOrigins__2
+            value: https://ctcare-ui.onrender.com
+          - key: Cors__PreflightMaxAgeMinutes
+            value: 10
+          - key: Cors__AllowCredentials
+            value: "false"
 
     # --- Redis cache ---
     - type: redis

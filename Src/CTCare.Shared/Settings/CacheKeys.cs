@@ -37,5 +37,13 @@ namespace CTCare.Shared.Settings
 
 
         private static string Norm(string s) => (s ?? string.Empty).Trim().ToLowerInvariant();
+
+
+        public static string BalanceKey(Guid employeeId, int year) => $"leave:balance:{employeeId}:{year}";
+        public static string MyListPrefix(Guid employeeId) => $"leave:my:{employeeId}:";
+
+        public static string TeamListPrefix(Guid managerId) => $"leave:team:{managerId:N}";
+
+        public static string RequestDetailsKey(Guid requestId) => $"leave:req:{requestId:N}";
     }
 }

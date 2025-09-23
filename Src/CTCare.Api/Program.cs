@@ -23,7 +23,10 @@ try
     builder.Services.AddControllers();
     builder.Services.AddAppSecurity();
     builder.Services.AddSwaggerWithJwtAndApiKey();
-    builder.Services.AddCorsOpenPolicy("AllowAll");
+
+    var settings = builder.Configuration.GetSection("Cors").Get<CorsSettings>() ?? new CorsSettings();
+
+    builder.Services.AddCorsOpenPolicy(builder.Configuration, settings);
 
     builder.Services.AddDbContextAndHangfirePostgres(builder.Environment);
     builder.Services.AddRedisCaching(builder.Environment);
@@ -43,6 +46,8 @@ try
     builder.Services.Configure<LeaveRulesSettings>(builder.Configuration.GetSection("LeaveRules"));
     builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
     builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+    builder.Services.AddSingleton(settings);
 
     builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 
@@ -99,7 +104,7 @@ try
     });
 
     //CORS before auth/authorization
-    app.UseCors("AllowAll");
+    app.UseCors(settings.PolicyName);
 
    app.UseApiKeyGate(builder.Configuration, app.Environment);
     //Auth => Rate limiting => Authorization

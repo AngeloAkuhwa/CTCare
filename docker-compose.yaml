@@ -92,6 +92,14 @@ services:
             Api__KeylessPaths__4: /api/v1/auth/forgot-password
             Api__KeylessPaths__5: /health
             Api__KeylessPaths__6: /swagger
+
+            #Cors
+            Cors__PolicyName: ${Cors__PolicyName}
+            Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0}
+            Cors__AllowedOrigins__1: ${Cors__AllowedOrigins__1}
+            Cors__AllowedOrigins__2: ${Cors__AllowedOrigins__2}
+            Cors__PreflightMaxAgeMinutes: ${Cors__PreflightMaxAgeMinutes}
+            Cors__AllowCredentials: ${Cors__AllowCredentials}
         ports:
             - "${API_PORT}:8080"
 
