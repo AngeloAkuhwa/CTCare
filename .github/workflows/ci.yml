@@ -115,6 +115,14 @@ env:
     AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MIN || '1' }}
     AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX: ${{ secrets.AUTHLIMITS__REFRESHTOKENVALIDITYDAYS__MAX || '90' }}
 
+    #CORS
+    Cors__PolicyName: ${{secrets.Cors__PolicyName}}
+    Cors__AllowedOrigins__0: ${{secrets.Cors__AllowedOrigins__0}}
+    Cors__AllowedOrigins__1: ${{secrets.Cors__AllowedOrigins__1}}
+    Cors__AllowedOrigins__2: ${{secrets.Cors__AllowedOrigins__2}}
+    Cors__PreflightMaxAgeMinutes: ${{secrets.Cors__PreflightMaxAgeMinutes}}
+    Cors__AllowCredentials: ${{secrets.Cors__AllowCredentials}}
+
 # Prevent wasted builds
 concurrency:
     group: net-ci-${{ github.ref }} # One run per branch/PR at a time
