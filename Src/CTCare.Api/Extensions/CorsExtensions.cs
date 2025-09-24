@@ -12,6 +12,7 @@ public static class CorsExtensions
                 p.WithOrigins(settings.AllowedOrigins)
                     .AllowAnyHeader()
                     .AllowAnyMethod()
+                    .AllowCredentials()
                     .SetPreflightMaxAge(TimeSpan.FromMinutes(settings.PreflightMaxAgeMinutes)));
         });
         return services;
