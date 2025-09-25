@@ -1,6 +1,6 @@
 # CTCare: Sick Leave Management System
 
-CTcare is an internal web application designed to help employees, managers, and HR teams efficiently manage sick leave. It replaces manual email and spreadsheet processes with a single source of truth fully integrated into the Microsoft 365 ecosystem.
+CTcare is an internal web application designed to help employees, managers, and People's team efficiently manage sick leave. It replaces manual email and spreadsheet processes with a single source of truth fully integrated into the Microsoft 365 ecosystem.
 
 ---
 
@@ -15,7 +15,7 @@ CTcare is an internal web application designed to help employees, managers, and 
 ## Problem We're Solving
 
 -   Employees submit sick leave requests via email.
--   Managers and HR track leave balances manually using Excel.
+-   Managers and People's team track leave balances manually using Excel.
 -   Doctor’s notes are scattered as attachments without centralized management.
 -   No real-time visibility on balances, approvals, or leave trends.
 
@@ -29,7 +29,7 @@ CTcare offers a streamlined, automated platform:
 
 -   **Employee self-service:** Request sick leave, view balances, and upload doctor’s notes.
 -   **Manager view:** Approve/reject requests, see team calendars, and identify overlaps.
--   **HR dashboard:** Monitor requests globally, track balances, generate reports, and configure leave policies.
+-   **People's team dashboard:** Monitor requests globally, track balances, generate reports, and configure leave policies.
 -   **Automation:** Notifications via Email and Teams, calendar sync with Outlook/Teams, secure attachment handling.
 -   **Reporting:** Insights on usage trends, absenteeism, and entitlement breaches.
 
@@ -188,7 +188,7 @@ _Exports available as Excel, CSV, and PDF formats._
 
 -   MVP: Employee request → Manager approval → Automatic balance update
 -   Secure uploads for doctor’s notes
--   Advanced HR dashboards with filtering options
+-   Advanced People's team dashboards with filtering options
 -   Microsoft Teams and Outlook notifications + calendar integration
 -   Enhanced reporting and export capabilities
 -   Directory synchronization (Azure AD + SharePoint)
@@ -214,7 +214,7 @@ Reports[Reports]
 
 Employee -->|Sick Leave Request| Manager
 Manager -->|Approve/Reject| Employee
-Reports -->|Insights & Exports| HR
+Reports -->|Insights & Exports| People's team
 ```
 
 ## Planned Enhancements & Deferred Items (Post-MVP)
@@ -227,7 +227,7 @@ This release focuses on the core leave flow. Below are items intentionally defer
 
 -   Switch to SSO (Azure AD / Entra ID) for all users; retire local passwords.
 
--   Role/Policy hardening: granular scopes (HR.Read, HR.Write, Approvals.Manage, Reports.Export).
+-   Role/Policy hardening: granular scopes (PeopleTeam.Read, PeopleTeam.Write, Approvals.Manage, Reports.Export).
 
 -   Just-in-time role sync from Azure AD groups (nightly + on login).
 
@@ -241,7 +241,7 @@ This release focuses on the core leave flow. Below are items intentionally defer
 
 -   SMS (Twilio/Your provider) for critical events (returns, escalations).
 
--   Digest emails (daily/weekly summaries to managers/HR).
+-   Digest emails (daily/weekly summaries to managers/People's team).
 
 -   Bounce/Undeliverable processing & retry with dead-letter queue.
 
@@ -259,7 +259,7 @@ This release focuses on the core leave flow. Below are items intentionally defer
 
 -   Overdue doctor’s note reminder (and auto-return/auto-cancel after grace period).
 
--   Pending-approval escalation (SLA timers => escalate to next manager/HR).
+-   Pending-approval escalation (SLA timers => escalate to next manager/People's team).
 
 -   Stale submitted auto-cancel (configurable window).
 
@@ -277,7 +277,7 @@ This release focuses on the core leave flow. Below are items intentionally defer
 
 -   Manager approval screen: team calendar view, clash highlighters, bulk actions, inline returns with comments.
 
--   HR dashboards: multi-filter reports, export to Excel/PDF.
+-   People's team dashboards: multi-filter reports, export to Excel/PDF.
 
 -   Admin console: leave rules, entitlement policies, public holidays, content templates, feature flags.
 
