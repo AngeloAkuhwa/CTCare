@@ -45,5 +45,9 @@ namespace CTCare.Shared.Settings
         public static string TeamListPrefix(Guid managerId) => $"leave:team:{managerId:N}";
 
         public static string RequestDetailsKey(Guid requestId) => $"leave:req:{requestId:N}";
+
+        public static string ActiveLeaveTypes => "leave:types:active";
+
+        public static string MyCountsKey(Guid employeeId) => $"leave:my:{employeeId}:counts";
     }
 }

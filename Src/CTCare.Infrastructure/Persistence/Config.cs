@@ -253,9 +253,7 @@ namespace CTCare.Infrastructure.Persistence
             e.Property(x => x.DaysRequested).HasPrecision(5, 2).IsRequired();
             e.Property(x => x.EmployeeComment).HasMaxLength(1000);
             e.Property(x => x.ManagerComment).HasMaxLength(1000);
-            
-            e.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-            
+
             e.Property(x => x.Status).HasConversion<string>();
 
             e.Property(x => x.Reason).HasMaxLength(2000);
@@ -295,8 +293,6 @@ namespace CTCare.Infrastructure.Persistence
             b.Property(x => x.EntitledDays).HasPrecision(5, 2).IsRequired();
             b.Property(x => x.UsedDays).HasPrecision(5, 2).IsRequired();
             b.Property(x => x.PendingDays).HasPrecision(5, 2).IsRequired();
-
-            b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
 
             b.HasOne(x => x.Employee).WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(x => x.LeaveType).WithMany().HasForeignKey(x => x.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);

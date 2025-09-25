@@ -10,11 +10,8 @@ namespace CTCare.Api.Extensions;
 
 public static class HangfireAndContextExtensions
 {
-    public static IServiceCollection AddDbContextAndHangfirePostgres(this IServiceCollection services, IHostEnvironment env)
+    public static IServiceCollection AddDbContextAndHangfirePostgres(this IServiceCollection services, IConfiguration cfg, IHostEnvironment env)
     {
-        var sp = services.BuildServiceProvider();
-        var cfg = sp.GetRequiredService<IConfiguration>();
-
         var raw = cfg.GetConnectionString("DefaultConnection") ?? string.Empty;
         var conn = Helper.NormalizePostgresForRender(raw);
 
@@ -27,7 +24,7 @@ public static class HangfireAndContextExtensions
         services.AddHttpContextAccessor();
 
         //Database Context registration
-        services.AddDbContext<CtCareDbContext>((sp, opts) =>
+        services.AddDbContext<CtCareDbContext>((_, opts) =>
         {
             opts.UseNpgsql(conn, npg => npg.MigrationsAssembly(typeof(CtCareDbContext).Assembly.FullName));
 
@@ -45,7 +42,8 @@ public static class HangfireAndContextExtensions
             try
             {
                 services.AddHangfire(c =>
-                    c.UseSimpleAssemblyNameTypeSerializer()
+                    c.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                    .UseSimpleAssemblyNameTypeSerializer()
                         .UseRecommendedSerializerSettings()
                         .UsePostgreSqlStorage(conn, new PostgreSqlStorageOptions
                         {

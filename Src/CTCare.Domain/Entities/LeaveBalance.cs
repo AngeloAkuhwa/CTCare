@@ -15,6 +15,4 @@ public class LeaveBalance: BaseEntity
     public decimal EntitledDays { get; set; }
     public decimal UsedDays { get; set; }
     public decimal PendingDays { get; set; }
-
-    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 }

@@ -12,72 +12,49 @@ public static class RedisExtensions
         var sp = services.BuildServiceProvider();
         var cfg = sp.GetRequiredService<IConfiguration>();
 
-        var settings = new RedisSetting();
-        cfg.GetSection(nameof(RedisSetting)).Bind(settings);
-        services.AddSingleton(settings);
+        services.AddOptions<RedisSetting>()
+            .Bind(cfg.GetSection("RedisSetting"))
+            .ValidateOnStart();
 
-        var (endpoint, password) = env.IsProduction() || Helper.IsRunningInContainer() ? Helper.NormalizeRedis(settings.ConnectionString ,settings.Password) : (settings.ConnectionStringLocalDEv, "");
+        var settings = cfg.GetSection("RedisSetting").Get<RedisSetting>() ?? new();
+
+        var (endpoint, password) =
+            (env.IsProduction() || Helper.IsRunningInContainer())
+                ? Helper.NormalizeRedis(settings.ConnectionString, settings.Password)
+                : (settings.ConnectionStringLocalDEv, "");
 
         services.AddSingleton<IConnectionMultiplexer>(_ =>
         {
-            var opt = new ConfigurationOptions
-            {
-                AbortOnConnectFail = settings.AbortOnConnectFail,
-                ConnectRetry = settings.ConnectRetry,
-                ConnectTimeout = settings.ConnectTimeout,
-                SyncTimeout = settings.SyncTimeOut,
-                Ssl = false, // internal network  => false
-            };
+            var coMux = ConfigurationOptions.Parse(endpoint, true);
+            coMux.AbortOnConnectFail = settings.AbortOnConnectFail;
+            coMux.ConnectRetry = settings.ConnectRetry;
+            coMux.ConnectTimeout = settings.ConnectTimeout;
+            coMux.SyncTimeout = settings.SyncTimeOut;
+            coMux.Ssl = false;
 
-            if (env.IsProduction() || Helper.IsRunningInContainer())
+            if (!string.IsNullOrWhiteSpace(password))
             {
-                opt.EndPoints.Add(endpoint);
-            }
-            else
-            {
-                opt = ConfigurationOptions.Parse(endpoint, true);
-                opt.AbortOnConnectFail = settings.AbortOnConnectFail;
-                opt.ConnectRetry = settings.ConnectRetry;
-                opt.ConnectTimeout = settings.ConnectTimeout;
-                opt.SyncTimeout = settings.SyncTimeOut;
-                opt.Ssl = false; // internal network  => false
+                coMux.Password = password;
             }
 
-            if (!string.IsNullOrEmpty(password))
-            {
-                opt.Password = password;
-            }
-
-            return ConnectionMultiplexer.Connect(opt);
+            return ConnectionMultiplexer.Connect(coMux);
         });
 
         services.AddStackExchangeRedisCache(o =>
         {
-            var co = new ConfigurationOptions
-            {
-                AbortOnConnectFail = settings.AbortOnConnectFail,
-                ConnectRetry = settings.ConnectRetry,
-                ConnectTimeout = settings.ConnectTimeout,
-                SyncTimeout = settings.SyncTimeOut,
-                Ssl = false
-            };
-
-            if (env.IsProduction() || Helper.IsRunningInContainer())
-            {
-                co.EndPoints.Add(endpoint);
-            }
-            else
-            {
-                o.Configuration = endpoint;
-            }
-
-            if (!string.IsNullOrEmpty(password))
+            var co = ConfigurationOptions.Parse(endpoint,  false);
+            co.AbortOnConnectFail = settings.AbortOnConnectFail;
+            co.ConnectRetry = settings.ConnectRetry;
+            co.ConnectTimeout = settings.ConnectTimeout;
+            co.SyncTimeout = settings.SyncTimeOut;
+            co.Ssl = false;
+            if (!string.IsNullOrWhiteSpace(password))
             {
                 co.Password = password;
             }
 
             o.ConfigurationOptions = co;
-           //o.InstanceName = "ctcare:";
+            o.InstanceName = "ctcare:";
         });
 
         return services;

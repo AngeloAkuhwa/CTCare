@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Reflection.Emit;
 
 using CTCare.Domain.Entities;
 using CTCare.Domain.Primitives;
@@ -42,6 +41,18 @@ public class CtCareDbContext(DbContextOptions<CtCareDbContext> opt): DbContext(o
                 .HasForeignKey(ur => ur.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        b.Entity<LeaveBalance>()
+            .Property<uint>("xmin")
+            .IsRowVersion();
+
+        b.Entity<LeaveRequest>()
+            .Property<uint>("xmin")
+            .IsRowVersion();
+
+        b.Entity<LeaveApprovalEvent>()
+            .Property<uint>("xmin")
+            .IsRowVersion();
 
         b.ApplyConfigurationsFromAssembly(typeof(CtCareDbContext).Assembly);
 

@@ -11,6 +11,13 @@ public static class SwaggerExtensions
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>
         {
+            c.SupportNonNullableReferenceTypes();
+            c.MapType<IFormFile>(() => new Microsoft.OpenApi.Models.OpenApiSchema
+            {
+                Type = "string",
+                Format = "binary"
+            });
+
             var xmlFile = $"{typeof(Program).Assembly.GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             if (File.Exists(xmlPath))
