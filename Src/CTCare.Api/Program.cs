@@ -123,18 +123,13 @@ try
 
     app.UseCors(settings.PolicyName);
 
-   app.UseApiKeyGate(builder.Configuration, app.Environment);
-    //Auth => Rate limiting => Authorization
+    //would be moved and placed after authorization for protected later 
+    app.UseHangfireDashboard("/hangfire");
+
+    app.UseApiKeyGate(builder.Configuration, app.Environment);
     app.UseAuthentication();
     app.UseRateLimiter();
     app.UseAuthorization();
-
-    //Hangfire dashboard (after auth/authorization if you want it protected)
-    // Optionally add an authorization filter if needed
-    app.UseHangfireDashboard("/hangfire", new DashboardOptions
-    {
-        Authorization = [new HangfireDashboardAuthFilter()]
-    });
 
     app.MapHealthEndpoints();
    app.MapControllers();

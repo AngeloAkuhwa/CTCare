@@ -10,15 +10,12 @@ public class LeaveDocument: BaseEntity
 
     public DocumentKind Kind { get; set; }
 
-    // Client file info
     public string FileName { get; set; }
     public string ContentType { get; set; }
     public long SizeBytes { get; set; }
 
-    // Legacy/local storage (CloudPublicId)
     public string StoragePath { get; set; }
 
-    // Cloudinary first fields
     public string? SecureUrl { get; set; }
     public string? ETag { get; set; }
     public string? Version { get; set; }

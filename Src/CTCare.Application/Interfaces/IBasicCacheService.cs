@@ -1,6 +1,5 @@
-using System.Threading.Tasks;
-
 namespace CTCare.Application.Interfaces;
+
 /// <summary>
 /// Basic key/value cache operations using a provider-agnostic abstraction.
 /// </summary>

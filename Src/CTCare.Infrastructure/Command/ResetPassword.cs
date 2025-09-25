@@ -176,11 +176,6 @@ public static class ResetPassword
             return core.Length <= keep * 2 ? $"{ResetPrefix}{core}" : $"{ResetPrefix}{core[..keep]}...{core[^keep..]}";
         }
 
-        // Simple server-side policy gate; expand if you add a dedicated validator later
-        // Global-standard-ish password policy:
-        // Length: 12–128 (NIST recommends >= 8; many orgs require 12+)
-        // Avoid long repeats and straight sequences
-        // Composition: require at least 3 of 4 classes (upper/lower/digit/symbol)
         private static bool MeetsPasswordPolicy(string pwd, out string? reason, string? email = "")
         {
             reason = null;

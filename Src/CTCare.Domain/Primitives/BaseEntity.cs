@@ -1,7 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
-using CTCare.Shared.Utilities;
-
 namespace CTCare.Domain.Primitives;
 public abstract class BaseEntity
 {
