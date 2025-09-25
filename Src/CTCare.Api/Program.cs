@@ -137,9 +137,7 @@ try
         Authorization = [new HangfireDashboardAuthFilter()]
     });
 
-    //Health + Controllers
     app.MapHealthEndpoints();
-   // app.MapControllers().RequireAuthorization(SecurityExtensions.PolicyJwtAndApi);
    app.MapControllers();
 
     app.Run();
