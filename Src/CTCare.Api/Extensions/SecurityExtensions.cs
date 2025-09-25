@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 
+using CTCare.Domain.Enums;
 using CTCare.Infrastructure.Persistence;
 using CTCare.Shared.Settings;
 
@@ -77,7 +78,7 @@ public static class SecurityExtensions
                     },
                     OnTokenValidated = ctx =>
                     {
-                        // enrich the identity here (e.g., map roles/claims from DB)
+                        // enrich the identity here
                         // e.g., heartbeat claim
                         var id = (ClaimsIdentity)ctx.Principal!.Identity!;
                         id.AddClaim(new Claim("token_validated_at", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
@@ -124,7 +125,7 @@ public static class SecurityExtensions
                         return SchemeApiKey;
                     }
 
-                    return SchemeBearer; // default so browser swagger works (then policy denies)
+                    return SchemeBearer;
                 };
             });
 
@@ -135,6 +136,20 @@ public static class SecurityExtensions
                 policy.RequireAuthenticatedUser();
                 policy.Requirements.Add(new BothJwtAndApiKeyRequirement());
             });
+
+            o.AddPolicy(nameof(UserRoles.Employee), p =>
+                p.RequireAuthenticatedUser()
+                    .RequireClaim(ClaimTypes.Role, nameof(UserRoles.Employee)));
+
+            o.AddPolicy(nameof(UserRoles.EngineeringManager), p =>
+                p.RequireAuthenticatedUser()
+                    .RequireRole(nameof(UserRoles.EngineeringManager))
+                    .RequireClaim("dept_code", "ENG"));
+
+            o.AddPolicy(nameof(UserRoles.HumanResourcePersonnel), p =>
+                p.RequireAuthenticatedUser()
+                    .RequireRole(nameof(UserRoles.HumanResourcePersonnel))
+                    .RequireClaim("dept_code", "HR"));
         });
 
         return services;

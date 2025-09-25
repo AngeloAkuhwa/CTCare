@@ -1,40 +1,39 @@
 using CTCare.Api.Extensions;
 using CTCare.Api.Filters;
 using CTCare.Api.Middlewares;
+using CTCare.Application.Files;
 using CTCare.Application.Interfaces;
 using CTCare.Application.Notification;
 using CTCare.Application.Services;
+using CTCare.Infrastructure.Files;
+using CTCare.Infrastructure.Leave.Jobs;
 using CTCare.Infrastructure.Persistence;
 using CTCare.Infrastructure.Security;
+using CTCare.Shared.Constants;
 using CTCare.Shared.Settings;
 using CTCare.Shared.SettingsValidator;
 
 using Hangfire;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // --- Services ---
     builder.AddSentryMonitoring();
     builder.Services.AddControllers();
     builder.Services.AddAppSecurity();
     builder.Services.AddSwaggerWithJwtAndApiKey();
 
     var settings = builder.Configuration.GetSection("Cors").Get<CorsSettings>() ?? new CorsSettings();
-
     builder.Services.AddCorsOpenPolicy(builder.Configuration, settings);
 
-    builder.Services.AddDbContextAndHangfirePostgres(builder.Environment);
+    builder.Services.AddDbContextAndHangfirePostgres(builder.Configuration, builder.Environment);
     builder.Services.AddRedisCaching(builder.Environment);
     builder.Services.AddHealthChecksInfra(builder.Environment);
     builder.Services.AddGlobalRateLimiting();
     builder.Services.AddApiKeyAuthOptions(builder.Configuration);
-
-    // Program.cs
 
     builder.Services.AddMediatR(cfg =>
         cfg.RegisterServicesFromAssemblies(
@@ -43,27 +42,32 @@ try
         )
     );
 
+    builder.Services
+        .AddOptions<LeaveRulesSettings>()
+        .Bind(builder.Configuration.GetSection("LeaveRules"))
+        .ValidateOnStart();
+
     builder.Services.Configure<LeaveRulesSettings>(builder.Configuration.GetSection("LeaveRules"));
     builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
     builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-
+    builder.Services.Configure<RedisSetting>(builder.Configuration.GetSection("RedisSetting"));
     builder.Services.AddSingleton(settings);
-
     builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
-
     builder.Services
         .Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"))
         .AddSingleton<IEmailService, EmailService>();
 
+    builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
+    builder.Services.AddScoped<IFileStorage, CloudinaryFileStorage>();
     builder.Services.AddScoped<ICacheService, CacheService>();
     builder.Services.AddScoped<ILoginAttemptService, LoginAttemptService>();
     builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
     builder.Services.AddScoped<IOtpService, OtpService>();
     builder.Services.AddHttpContextAccessor();
-
     builder.Services.AddScoped<IRoleResolver, RoleResolver>();
     builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
-
+    builder.Services.RegisterLeaveServices();
+    builder.Services.AddScoped<AnnualEntitlementProvisioner>();
 
     builder.Services.AddOptions<AuthSettings>()
         .BindConfiguration("Auth")
@@ -78,11 +82,25 @@ try
     // If running behind a proxy (Render), trust x-forwarded headers
     builder.Services.AddForwardedHeaders();
 
+
     var app = builder.Build();
 
-    //Middleware pipeline
     await app.Services.MigrateAsync(app.Environment, seed : DbSeed.SeedAsync);
-   // await app.Services.MigrateAsync(app.Environment, seed: app.Environment.IsProduction() ? null : DbSeed.SeedAsync);
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var manager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+
+        manager.AddOrUpdate<AnnualEntitlementProvisioner>(
+            "leave:provision:annual",
+            svc => svc.ProvisionForYearAsync(
+                DateTime.UtcNow.Year,
+                Guid.Parse(LeaveTypeConstants.SickLeaveTypeConstant),
+                CancellationToken.None),
+            Cron.Yearly,
+            TimeZoneInfo.Utc);
+    }
+
     app.UseForwardedHeaders();
     app.UseSentryTracing();
     app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -103,7 +121,6 @@ try
         o.DisplayOperationId();
     });
 
-    //CORS before auth/authorization
     app.UseCors(settings.PolicyName);
 
    app.UseApiKeyGate(builder.Configuration, app.Environment);
@@ -119,9 +136,7 @@ try
         Authorization = [new HangfireDashboardAuthFilter()]
     });
 
-    //Health + Controllers
     app.MapHealthEndpoints();
-   // app.MapControllers().RequireAuthorization(SecurityExtensions.PolicyJwtAndApi);
    app.MapControllers();
 
     app.Run();

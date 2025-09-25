@@ -294,7 +294,8 @@ public static class DbSeed
                         Email = managerEmail,
                         EmailConfirmed = true,
                         PasswordHash = hash,
-                        PasswordSalt = salt
+                        PasswordSalt = salt ,
+                        EmployeeId = manager.Id
                     };
 
                     db.UserAccounts.Add(user);
@@ -312,7 +313,8 @@ public static class DbSeed
                         Email = devEmail,
                         EmailConfirmed = true,
                         PasswordHash = hash,
-                        PasswordSalt = salt
+                        PasswordSalt = salt,
+                        EmployeeId = dev.Id
                     };
 
                     db.UserAccounts.Add(user);

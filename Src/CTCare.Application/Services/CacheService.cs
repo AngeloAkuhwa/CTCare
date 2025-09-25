@@ -27,7 +27,6 @@ public class CacheService(
     private readonly IDistributedCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     private readonly IDatabase _db = (redis ?? throw new ArgumentNullException(nameof(redis))).GetDatabase();
     private readonly ILogger<CacheService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly RedisSetting _settings = (redisOptions ?? throw new ArgumentNullException(nameof(redisOptions))).Value;
 
     // This must match how AddStackExchangeRedisCache was configured (InstanceName).
     private readonly string _instancePrefix = (redisCacheOptions?.Value?.InstanceName ?? string.Empty);
@@ -53,7 +52,7 @@ public class CacheService(
     public async Task SetAsync(
         string key,
         string value,
-        TimeSpan absoluteExpiry,
+        TimeSpan? absoluteExpiry = null,
         TimeSpan? slidingExpiry = null,
         CancellationToken cancellationToken = default)
     {
@@ -62,8 +61,8 @@ public class CacheService(
 
         var options = new DistributedCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = absoluteExpiry,
-            SlidingExpiration = slidingExpiry ?? _settings.SlidingExpiration
+            AbsoluteExpirationRelativeToNow = absoluteExpiry ?? redisOptions.Value.AbsoluteExpiration,
+            SlidingExpiration = slidingExpiry ?? redisOptions.Value.SlidingExpiration
         };
 
         try
@@ -83,7 +82,7 @@ public class CacheService(
     public async Task SetAsync(
         string key,
         string value,
-        TimeSpan absoluteExpiry,
+        TimeSpan? absoluteExpiry,
         IEnumerable<string>? tags,
         TimeSpan? slidingExpiry = null,
         CancellationToken cancellationToken = default)
@@ -93,8 +92,8 @@ public class CacheService(
 
         var options = new DistributedCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = absoluteExpiry,
-            SlidingExpiration = slidingExpiry ?? _settings.SlidingExpiration
+            AbsoluteExpirationRelativeToNow = absoluteExpiry ?? redisOptions.Value.AbsoluteExpiration,
+            SlidingExpiration = slidingExpiry ?? redisOptions.Value.SlidingExpiration
         };
 
         try
@@ -115,7 +114,7 @@ public class CacheService(
                     tasks.Add(_db.SetAddAsync(setKey, key));
 
                     // Extend tag-set TTL to at least value TTL (prevents endless growth of tag sets)
-                    tasks.Add(ExtendKeyTtlIfShorterAsync(setKey, absoluteExpiry));
+                    tasks.Add(ExtendKeyTtlIfShorterAsync(setKey, absoluteExpiry ?? redisOptions.Value.AbsoluteExpiration));
                 }
                 await Task.WhenAll(tasks);
             }

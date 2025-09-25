@@ -73,6 +73,8 @@ services:
             value: /swagger
           - key: Api__KeylessPaths__5
             value: /health
+          - key: Api__KeylessPaths__6
+            value: /hangfire
 
           # App / UI base URLs
           - key: AppSettings__BaseUrl
@@ -181,6 +183,24 @@ services:
             value: 10
           - key: Cors__AllowCredentials
             value: "false"
+
+          #Cloudinary
+          - key: Cloudinary__CloudName
+            value: dgmcdk4lq
+          - key: Cloudinary__ApiKey
+            value: 715591611478739
+          - key: Cloudinary__ApiSecret
+            value: GzpwWQnvMoOYwnuL6MabrYYjrcM
+          - key: Cloudinary__Folder
+            value: "ctcare/leave"
+          - key: Cloudinary__MaxUploadSizeBytes
+            value: 10485760
+          - key: Cloudinary__AllowedContentTypes__0
+            value: "application/pdf"
+          - key: Cloudinary__AllowedContentTypes__1
+            value: "image/jpeg"
+          - key: Cloudinary__AllowedContentTypes__2
+            value: "image/png"
 
     # --- Redis cache ---
     - type: redis

@@ -92,6 +92,7 @@ services:
             Api__KeylessPaths__4: /api/v1/auth/forgot-password
             Api__KeylessPaths__5: /health
             Api__KeylessPaths__6: /swagger
+            Api__KeylessPaths__7: /hangfire
 
             #Cors
             Cors__PolicyName: ${Cors__PolicyName}
@@ -100,6 +101,16 @@ services:
             Cors__AllowedOrigins__2: ${Cors__AllowedOrigins__2}
             Cors__PreflightMaxAgeMinutes: ${Cors__PreflightMaxAgeMinutes}
             Cors__AllowCredentials: ${Cors__AllowCredentials}
+
+             #Cloudinary
+            Cloudinary__CloudName: ${Cloudinary__CloudName}
+            Cloudinary__ApiKey: ${Cloudinary__ApiKey}
+            Cloudinary__ApiSecret: ${Cloudinary__ApiSecret}
+            Cloudinary__Folder: ${Cloudinary__Folder}
+            Cloudinary__MaxUploadSizeBytes: ${Cloudinary__MaxUploadSizeBytes}
+            Cloudinary__AllowedContentTypes__0: ${Cloudinary__AllowedContentTypes__0}
+            Cloudinary__AllowedContentTypes__1: ${Cloudinary__AllowedContentTypes__1}
+            Cloudinary__AllowedContentTypes__2: ${Cloudinary__AllowedContentTypes__2}
         ports:
             - "${API_PORT}:8080"
 

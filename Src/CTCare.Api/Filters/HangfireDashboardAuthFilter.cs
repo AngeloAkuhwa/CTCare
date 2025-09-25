@@ -1,4 +1,3 @@
-using CTCare.Domain.Entities;
 using CTCare.Domain.Enums;
 
 using Hangfire.Dashboard;

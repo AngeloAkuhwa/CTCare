@@ -51,7 +51,7 @@ public sealed class LoginAttemptService(
             return new LoginAttemptResult { IsLocked = true, FailedCount = 0, RemainingLockout = duration };
         }
 
-        await cache.SetAsync(failKey, newCount.ToString(), _opt.RetryWindow, null, ct);
+        await cache.SetAsync(failKey, newCount.ToString(), null, null, ct);
         logger.LogInformation("Recorded failure #{Count} for {FailKey}.", newCount, failKey);
 
         return new LoginAttemptResult { IsLocked = false, FailedCount = newCount, RemainingLockout = null };

@@ -357,6 +357,12 @@ namespace CTCare.Infrastructure.Migrations
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("LeaveRequestId", "CreatedAt");
@@ -450,12 +456,6 @@ namespace CTCare.Infrastructure.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("numeric(5,2)");
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -468,6 +468,12 @@ namespace CTCare.Infrastructure.Migrations
 
                     b.Property<int>("Year")
                         .HasColumnType("integer");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -499,6 +505,9 @@ namespace CTCare.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ETag")
+                        .HasColumnType("text");
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -513,6 +522,9 @@ namespace CTCare.Infrastructure.Migrations
                     b.Property<Guid>("LeaveRequestId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("SecureUrl")
+                        .HasColumnType("text");
+
                     b.Property<long>("SizeBytes")
                         .HasColumnType("bigint");
 
@@ -526,6 +538,9 @@ namespace CTCare.Infrastructure.Migrations
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Version")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -641,12 +656,6 @@ namespace CTCare.Infrastructure.Migrations
                     b.Property<string>("RejectionReason")
                         .HasColumnType("text");
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 
@@ -665,6 +674,12 @@ namespace CTCare.Infrastructure.Migrations
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 

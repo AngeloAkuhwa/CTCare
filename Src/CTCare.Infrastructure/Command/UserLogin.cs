@@ -131,12 +131,12 @@ public static class UserLogin
             account.AccessFailedCount = 0;
             account.LockoutEndUtc = null;
 
-            if (!account.EmailConfirmed || account.Employee.EmailStatus != EmailStatus.Verified)
+            if (account.Employee != null && (!account.EmailConfirmed || account.Employee.EmailStatus != EmailStatus.Verified))
             {
                 await db.SaveChangesAsync(ct);
                 return new Result(HttpStatusCode.Forbidden) { ErrorMessage = "Email not confirmed." };
             }
-            if (account.Employee.Status is EmploymentStatus.Terminated or EmploymentStatus.Suspended)
+            if (account.Employee is { Status: EmploymentStatus.Terminated or EmploymentStatus.Suspended })
             {
                 await db.SaveChangesAsync(ct);
                 return new Result(HttpStatusCode.Forbidden) { ErrorMessage = "Account is not active." };

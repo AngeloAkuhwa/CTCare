@@ -1,4 +1,3 @@
-// ApiKeyExtensions.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
@@ -56,7 +55,6 @@ public static class ApiKeyExtensions
                 return;
             }
 
-            // Header check
             if (!ctx.Request.Headers.TryGetValue("X-Api-Key", out var provided) ||
                 !opts.Keys.Contains(provided.ToString()))
             {

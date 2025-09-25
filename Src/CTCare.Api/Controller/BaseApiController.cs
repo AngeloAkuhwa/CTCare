@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Claims;
 
 using CTCare.Shared.BasicResult;
 
@@ -29,6 +30,12 @@ namespace CTCare.Api.Controller
                 HttpStatusCode.NotFound => NotFound(result),
                 _ => StatusCode((int)result.Status, result)
             };
+        }
+
+        protected Guid GetEmployeeIdClaim()
+        {
+            var raw = User.FindFirstValue("employee_id") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.TryParse(raw, out var id) ? id : Guid.Empty;
         }
     }
 }
