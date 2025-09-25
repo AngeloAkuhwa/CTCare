@@ -20,7 +20,7 @@ public static class ApiKeyUtilities
         using var sha = SHA256.Create();
         var bytes = Encoding.UTF8.GetBytes(apiKey);
         var hash = sha.ComputeHash(bytes);
-        return Convert.ToHexString(hash); // UPPERCASE hex
+        return Convert.ToHexString(hash);
     }
 
     // Constant-time comparison to avoid timing attacks

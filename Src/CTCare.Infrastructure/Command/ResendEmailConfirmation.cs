@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 
 using CTCare.Application.Interfaces;
-using CTCare.Application.Notification;
 using CTCare.Domain.Entities;
 using CTCare.Domain.Enums;
 using CTCare.Infrastructure.Persistence;

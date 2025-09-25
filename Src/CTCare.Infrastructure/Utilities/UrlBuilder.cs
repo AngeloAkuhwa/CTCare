@@ -45,7 +45,7 @@ public static class UrlBuilder
         return string.IsNullOrEmpty(qs) ? url : url + prefix + qs;
     }
 
-    public static string BuildRootUrl(IHttpContextAccessor http, IOptions<AppSettings> app)
+    private static string BuildRootUrl(IHttpContextAccessor http, IOptions<AppSettings> app)
     {
         // Prefer explicit BaseUrl if given (treat it as *root*, we will add API paths below, idempotently)
         var cfg = (app.Value.BaseUrl ?? string.Empty).TrimEnd('/');
@@ -65,7 +65,7 @@ public static class UrlBuilder
         return $"{req.Scheme}://{req.Host.Value}{pathBase}".TrimEnd('/');
     }
 
-    public static string BuildApiBase(IHttpContextAccessor http, IOptions<AppSettings> app, string apiVersion = "v1")
+    private static string BuildApiBase(IHttpContextAccessor http, IOptions<AppSettings> app, string apiVersion = "v1")
     {
         var cfg = (app.Value.BaseUrl ?? string.Empty).TrimEnd('/');
         if (!string.IsNullOrWhiteSpace(cfg))

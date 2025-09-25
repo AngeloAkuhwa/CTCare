@@ -7,7 +7,7 @@ public class AuditLog: BaseEntity
 {
     public Guid? ActorId { get; set; }
     public string ActorName { get; set; }
-    public string Action { get; set; }// CreateLeaveRequest, ApproveStep, etc.
+    public string Action { get; set; }
     public Guid EntityId { get; set; }
     public string EntityName { get; set; }
     public string[] ChangedColumns { get; set; }

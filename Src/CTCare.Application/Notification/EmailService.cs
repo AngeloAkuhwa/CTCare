@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 
+using CTCare.Application.Interfaces;
 using CTCare.Shared;
 using CTCare.Shared.Settings;
 
@@ -23,17 +24,6 @@ using RazorLight.Compilation;
 
 namespace CTCare.Application.Notification;
 
-public interface IEmailService
-{
-    Task SendEmailAsync(
-        string toAddress,
-        string subject,
-        string htmlBody,
-        string plainTextBody = null!,
-        CancellationToken ct = default);
-    Task<string> RenderTemplateAsync<TModel>(string templateKey, TModel model);
-}
-
 public class EmailService: IEmailService
 {
     private readonly EmailSetting _settings;
@@ -48,7 +38,6 @@ public class EmailService: IEmailService
         _settings = options.Value;
         _logger = logger;
 
-        // Build a simple exponential-backoff retry policy
         _retryPolicy = Polly.Policy
                 .Handle<Exception>()
                 .WaitAndRetryAsync(

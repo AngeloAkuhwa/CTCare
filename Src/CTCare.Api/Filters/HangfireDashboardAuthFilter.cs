@@ -4,6 +4,9 @@ using Hangfire.Dashboard;
 
 namespace CTCare.Api.Filters;
 
+/// <summary>
+/// to be extended to protect hangfire dashboard later
+/// </summary>
 public sealed class HangfireDashboardAuthFilter: IDashboardAuthorizationFilter
 {
     public bool Authorize(DashboardContext ctx)
@@ -11,7 +14,6 @@ public sealed class HangfireDashboardAuthFilter: IDashboardAuthorizationFilter
         var http = ctx.GetHttpContext();
         var env = http.RequestServices.GetRequiredService<IWebHostEnvironment>();
 
-        // Open in Development
         if (env.IsDevelopment())
         {
             return true;
