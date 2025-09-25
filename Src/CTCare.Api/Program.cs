@@ -121,7 +121,6 @@ try
         o.DisplayOperationId();
     });
 
-    //CORS before auth/authorization
     app.UseCors(settings.PolicyName);
 
    app.UseApiKeyGate(builder.Configuration, app.Environment);
