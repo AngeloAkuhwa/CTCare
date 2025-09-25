@@ -4,6 +4,14 @@ CTcare is an internal web application designed to help employees, managers, and 
 
 ---
 
+# The CTCare Team:
+
+-   Olamilekan Abolade
+-   Mimidoo Ucheagwu
+-   Dorathy Osuman
+-   Prosper Ikechukwu
+-   Angelo Akuhwa
+
 ## Problem We're Solving
 
 -   Employees submit sick leave requests via email.
