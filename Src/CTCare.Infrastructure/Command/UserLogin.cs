@@ -43,14 +43,19 @@ public static class UserLogin
         public Result(HttpStatusCode status) : base(status) { }
         public Result(string error) : base(error) { }
 
-        public string AccessToken { get; init; } = "";
+        public string AccessToken { get; init; }
         public DateTimeOffset AccessTokenExpiresAt { get; init; }
 
-        public string RefreshToken { get; init; } = "";
+        public string RefreshToken { get; init; }
         public DateTimeOffset RefreshTokenExpiresAt { get; init; }
 
         public bool OtpRequired { get; init; }
+
         public string? Delivery { get; init; }
+
+        public Guid? EmployeeId { get; init; }
+
+        public string[] Roles { get; init; }
     }
 
 
@@ -62,7 +67,7 @@ public static class UserLogin
         ILoginAttemptService attempt,
         IHttpContextAccessor http,
         ILogger<Handler> log,
-        IOptions<AuthSettings> authOpt ,
+        IOptions<AuthSettings> authOpt,
         IJwtTokenService jwt,
         IRoleResolver rolesResolver,
         IRefreshTokenService refreshTokens
@@ -154,7 +159,7 @@ public static class UserLogin
 
             var roles = rolesResolver.Resolve(account.Employee);
             var (access, expAt) = jwt.IssueAccessToken(account, roles);
-            var rt =  refreshTokens.Issue(account.EmployeeId.Value, authOpt.Value.RefreshTokenValidityDays,db, ct);
+            var rt = refreshTokens.Issue(account.EmployeeId.Value, authOpt.Value.RefreshTokenValidityDays, db, ct);
 
             db.RefreshTokens.Add(rt);
             account.LastLoginAtUtc = DateTimeOffset.UtcNow;
@@ -167,7 +172,9 @@ public static class UserLogin
                 AccessToken = access,
                 AccessTokenExpiresAt = expAt,
                 RefreshToken = rt.Token,
-                RefreshTokenExpiresAt = rt.ExpiresAt
+                RefreshTokenExpiresAt = rt.ExpiresAt,
+                Roles = roles,
+                EmployeeId = account.EmployeeId
             };
         }
 
