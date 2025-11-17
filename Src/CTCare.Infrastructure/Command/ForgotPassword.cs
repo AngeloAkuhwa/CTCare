@@ -20,6 +20,8 @@ using Microsoft.Extensions.Options;
 
 namespace CTCare.Infrastructure.Command;
 
+// TODO: clean up hardcoded string messages
+
 public static class ForgotPassword
 {
     public sealed class Command: IRequest<Result>

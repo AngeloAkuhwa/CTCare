@@ -17,7 +17,7 @@ namespace CTCare.Api.Controller
         /// <summary>
         /// Returns aggregate counters for the current user's leave requests,
         /// grouped by status (Submitted, Returned, Approved, Cancelled).
-        /// Useful for rendering dashboard badges.
+        /// Useful for rendering dashboard stats.
         /// </summary>
         /// <response code="200">Counters successfully retrieved.</response>
         /// <response code="401">Unauthorized (missing/invalid token).</response>

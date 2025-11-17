@@ -9,6 +9,7 @@ namespace CTCare.Api.Filters;
 /// </summary>
 public sealed class HangfireDashboardAuthFilter: IDashboardAuthorizationFilter
 {
+    // Todo: re-inject later
     public bool Authorize(DashboardContext ctx)
     {
         var http = ctx.GetHttpContext();

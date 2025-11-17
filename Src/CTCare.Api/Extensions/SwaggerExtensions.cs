@@ -12,7 +12,7 @@ public static class SwaggerExtensions
         services.AddSwaggerGen(c =>
         {
             c.SupportNonNullableReferenceTypes();
-            c.MapType<IFormFile>(() => new Microsoft.OpenApi.Models.OpenApiSchema
+            c.MapType<IFormFile>(() => new OpenApiSchema
             {
                 Type = "string",
                 Format = "binary"

@@ -28,6 +28,8 @@ public class EmailService: IEmailService
 {
     private readonly EmailSetting _settings;
     private readonly ILogger<EmailService> _logger;
+
+    // TODO: to be improved to polly >= v8 and extend for other third-party re-usability
     private readonly AsyncPolicy _retryPolicy;
     private readonly RazorLightEngine? _razorEngine;
 

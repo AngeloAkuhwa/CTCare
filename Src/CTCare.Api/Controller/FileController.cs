@@ -15,6 +15,7 @@ namespace CTCare.Api.Controller
     [Authorize]
     public sealed class FilesController(IMediator mediator): BaseApiController
     {
+        // TODO: to be improved to handle multiple document submission within a single request
         /// <summary>
         /// Uploads a document for a specific leave request (e.g., doctor's note).
         /// </summary>

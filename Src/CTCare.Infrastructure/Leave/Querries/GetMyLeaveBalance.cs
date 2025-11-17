@@ -58,7 +58,7 @@ namespace CTCare.Infrastructure.Leave.Querries
                         }
                         catch
                         {
-                            // If deserialization fails, fall through to DB fetch
+                            // TODO: If deserialization fails, fall through to DB fetch
                         }
                     }
                 }

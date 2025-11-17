@@ -143,7 +143,7 @@ public static class ApproveLeave
                 return new Result(HttpStatusCode.InternalServerError) { ErrorMessage = "Internal error approving leave." };
             }
 
-            // Cache bust (best-effort)
+            // Cache bust
             try
             {
                 if (cache is not null)
@@ -161,7 +161,7 @@ public static class ApproveLeave
                 log.LogWarning(cex, "Cache invalidation failed after approving {LeaveRequestId}", lr.Id);
             }
 
-            // Email notify (don’t fail approval if this throws)
+            // Email notify (don't fail approval if this throws)
             var emailSent = false;
             try
             {

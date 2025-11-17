@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CTCare.Infrastructure.Leave.Commands
 {
+    // TODO: improve this flow to support more than 1 document upload
     public static class UploadLeaveDocument
     {
         public sealed class Command: IRequest<Result>

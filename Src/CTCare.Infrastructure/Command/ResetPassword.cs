@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 
 namespace CTCare.Infrastructure.Command;
 
+// TODO: clean up hardcoded string messages
+
 public static class ResetPassword
 {
     public sealed class Command: IRequest<Result>

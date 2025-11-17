@@ -13,8 +13,7 @@ public sealed class RoleResolver: IRoleResolver
         var dept = emp.Department?.Code;
         var title = emp.Designation;
 
-        if (!string.IsNullOrWhiteSpace(dept) &&
-            dept.Equals("HR", StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(dept) && dept.Equals("HR", StringComparison.OrdinalIgnoreCase))
         {
             roles.Add(nameof(UserRoles.HumanResourcePersonnel));
         }

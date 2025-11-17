@@ -29,7 +29,7 @@ namespace CTCare.Infrastructure.Leave.Querries
 
                 var statuses = ParseStatuses(filter.StatusesCsv);
 
-                IQueryable<Domain.Entities.LeaveRequest> q = db.LeaveRequests
+                IQueryable<LeaveRequest> q = db.LeaveRequests
                     .AsNoTracking()
                     .Include(x => x.Employee);
 
@@ -100,7 +100,7 @@ namespace CTCare.Infrastructure.Leave.Querries
                 var paged = await q.ToPagedResultAsync(
                     request: filter,
                     selector: selector,
-                    maxPageLength: 100,
+                    maxPageLength: filter.PageLength,
                     ct: ct);
 
                 return paged;

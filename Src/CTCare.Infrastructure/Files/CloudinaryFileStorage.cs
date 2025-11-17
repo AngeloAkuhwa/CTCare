@@ -10,6 +10,8 @@ using Microsoft.Extensions.Options;
 
 namespace CTCare.Infrastructure.Files;
 
+// TODO: keep this slim. separate cloudinary api stand alone and re-inject into this service
+
 public sealed class CloudinaryFileStorage: IFileStorage
 {
     private readonly Cloudinary _cloudinary;
