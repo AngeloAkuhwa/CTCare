@@ -40,6 +40,7 @@ public static class RedisExtensions
             return ConnectionMultiplexer.Connect(coMux);
         });
 
+        // TODO: remove this and prefer Multiplexer
         services.AddStackExchangeRedisCache(o =>
         {
             var co = ConfigurationOptions.Parse(endpoint,  false);

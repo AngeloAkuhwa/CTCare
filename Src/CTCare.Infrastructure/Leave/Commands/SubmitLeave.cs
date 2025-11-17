@@ -28,6 +28,16 @@ public static class SubmitLeave
         public LeaveUnit Unit { get; set; }
         public Guid? DoctorNoteAttachmentId { get; set; }
         public string? Comment { get; set; }
+        public UploadedFile? Upload { get; set; }
+        public DocumentKind? UploadKind { get; set; } 
+    }
+
+    public sealed class UploadedFile
+    {
+        public Stream Content { get; init; }
+        public string FileName { get; init; }
+        public string ContentType { get; init; }
+        public long Length { get; init; }
     }
 
     public sealed class Result: BasicActionResult

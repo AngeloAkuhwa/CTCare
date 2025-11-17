@@ -18,6 +18,8 @@ using Microsoft.Extensions.Options;
 
 namespace CTCare.Infrastructure.Command;
 
+// TODO: clean up hardcoded string messages
+
 public static class UserLogin
 {
     public class Command: IRequest<Result>

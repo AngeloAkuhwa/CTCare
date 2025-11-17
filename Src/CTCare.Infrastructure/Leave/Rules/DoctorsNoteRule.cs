@@ -5,6 +5,7 @@ namespace CTCare.Infrastructure.Leave.Rules;
 
 public sealed class DoctorsNoteRule: IDoctorsNoteRule
 {
+    // TODO: pull this from db always
     private const int MaxDays = 2;
     public bool RequiresDoctorNote(DateOnly start, DateOnly end, LeaveUnit unit, IBusinessCalendarService cal)
     {

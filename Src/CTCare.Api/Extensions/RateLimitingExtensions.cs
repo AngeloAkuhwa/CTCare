@@ -27,7 +27,7 @@ public static class RateLimitingExtensions
                     partitionKey: ip,
                     factory: _ => new FixedWindowRateLimiterOptions
                     {
-                        Window = TimeSpan.FromMinutes(1),
+                        Window = TimeSpan.FromMinutes(1), //TODO: make this dynamic
                         PermitLimit = model.RequestsPerMinute,
                         QueueLimit = model.Burst,
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst

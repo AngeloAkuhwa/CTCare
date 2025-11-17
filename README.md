@@ -130,8 +130,6 @@ dotnet build
 docker compose up -d
 ```
 
-_(Starts PostgreSQL, Azurite, and optional Redis)_
-
 ### Apply Database Migrations
 
 ```
@@ -155,7 +153,7 @@ dotnet run --project Src/CTCare.Api
 
 ## Authentication & Roles
 
--   **SSO** via Azure AD (Entra ID)
+-   **SSO** via Azure AD (Entra ID) => Undone (username, password auth available atm)
 -   **Roles:**
     -   _Employee_ — Request and view sick leave
     -   _Manager_ — Approve requests, view team calendar

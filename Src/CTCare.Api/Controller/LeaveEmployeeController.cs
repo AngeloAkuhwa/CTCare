@@ -21,9 +21,6 @@ namespace CTCare.Api.Controller
         /// Validates business rules (business days, half-day, doc rule, overlap),
         /// reserves pending balance, persists request + audit "Submitted".
         /// </summary>
-        /// <remarks>
-        /// Route: <c>POST /api/v1/leave/requests</c>
-        /// </remarks>
         [HttpPost("requests")]
         [ProducesResponseType(typeof(SubmitLeave.Result), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -45,9 +42,6 @@ namespace CTCare.Api.Controller
         /// Cancel one of your leave requests (if not yet approved).
         /// If the request is still submitted, this releases your pending reservation.
         /// </summary>
-        /// <remarks>
-        /// Route: <c>POST /api/v1/leave/requests/{id}/cancel</c>
-        /// </remarks>
         [HttpPost("requests/{id:guid}/cancel")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -75,10 +69,6 @@ namespace CTCare.Api.Controller
         /// Get a snapshot of your current-year leave balance.
         /// Optionally filter to a specific LeaveType (otherwise totals are aggregated).
         /// </summary>
-        /// <remarks>
-        /// Route: <c>GET /api/v1/leave/balance/my</c>
-        /// Query: <c>?leaveTypeId=GUID&amp;year=YYYY</c> (both optional; defaults year=now)
-        /// </remarks>
         [HttpGet("balance/my")]
         [ProducesResponseType(typeof(GetMyLeaveBalance.Result), (int)HttpStatusCode.OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -104,9 +94,6 @@ namespace CTCare.Api.Controller
         /// Get details for a single *own* leave request, including audit trail and any doctor’s note link.
         /// Ownership/visibility is enforced in the handler.
         /// </summary>
-        /// <remarks>
-        /// Route: <c>GET /api/v1/leave/requests/{id}</c>
-        /// </remarks>
         [HttpGet("requests/{id:guid}")]
         [ProducesResponseType(typeof(GetMyLeaveRequestDetails.Result), (int)HttpStatusCode.OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -131,12 +118,8 @@ namespace CTCare.Api.Controller
 
         /// <summary>
         /// Edit a previously returned-for-correction leave request (your own).
-        /// Your handler should enforce the “only when Returned” rule and allowed fields.
+        /// The handler should enforce the "only when Returned" rule and allowed fields.
         /// </summary>
-        /// <remarks>
-        /// Route: <c>PUT /api/v1/leave/requests/{id}</c>
-        /// Body:edit command object (e.g., dates, unit, comment, doctor note id)
-        /// </remarks>
         [HttpPut("requests/{id:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -162,9 +145,6 @@ namespace CTCare.Api.Controller
         /// Re-submit a returned leave request after making corrections.
         /// Re-validates rules, re-reserves pending balance, sets status to Submitted, adds audit event.
         /// </summary>
-        /// <remarks>
-        /// Route: <c>POST /api/v1/leave/requests/{id}/resubmit</c>
-        /// </remarks>
         [HttpPost("requests/{id:guid}/resubmit")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -1,10 +1,10 @@
 using CTCare.Api.Extensions.Utility;
+using CTCare.Shared.Settings;
 
 using HealthChecks.UI.Client;
+
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Npgsql;
-using CTCare.Shared.Settings;
 
 namespace CTCare.Api.Extensions;
 
@@ -39,7 +39,7 @@ public static class HealthCheckExtensions
 
         services.AddHealthChecks()
             .AddNpgSql(dbConn, name: "postgresql", failureStatus: HealthStatus.Unhealthy)
-            .AddRedis(redisHc, name: "redis", failureStatus: HealthStatus.Unhealthy);
+            .AddRedis(redisHc, name: "redis", failureStatus: HealthStatus.Unhealthy); //TODO: to be improved with a realtime Multiplexer injection
 
         return services;
     }

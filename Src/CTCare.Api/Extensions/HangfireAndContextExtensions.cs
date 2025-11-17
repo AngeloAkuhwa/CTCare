@@ -23,7 +23,6 @@ public static class HangfireAndContextExtensions
 
         services.AddHttpContextAccessor();
 
-        //Database Context registration
         services.AddDbContext<CtCareDbContext>((_, opts) =>
         {
             opts.UseNpgsql(conn, npg => npg.MigrationsAssembly(typeof(CtCareDbContext).Assembly.FullName));

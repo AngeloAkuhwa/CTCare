@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CTCare.Infrastructure.Command;
 
+// TODO: clean up hardcoded string messages
 public static class ConfirmEmail
 {
     public sealed class Command: IRequest<Result>
